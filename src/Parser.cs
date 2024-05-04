@@ -1,7 +1,7 @@
 namespace PixelEngine.Lang;
 public class Parser(IEnumerable<Token> tokens) {
   public Stack<Token> tokens = new(tokens);
-  
+
   public Token Eat() {
     return tokens.Pop();
   }
@@ -24,8 +24,8 @@ public class Parser(IEnumerable<Token> tokens) {
     Program program = new();
     while (tokens.Count > 0) {
       if (Peek().type == TType.Newline) {
-          Eat();
-          continue;
+        Eat();
+        continue;
       }
       var statement = ParseStatement();
       Statement.CatchError(statement);
@@ -38,17 +38,20 @@ public class Parser(IEnumerable<Token> tokens) {
       var token = Peek();
       switch (token.family) {
         case TFamily.Operator:
-        if (token.type == TType.Newline) {
-          Eat();
-          continue;
-        } else goto default; // err
+          if (token.type == TType.Newline) {
+            Eat();
+            continue;
+          }
+          else goto default; // err
         case TFamily.Identifier:
           var operand = ParseOperand();
           if (operand is Identifier id) {
             return ParseIdentifierStatement(id);
-          } else if (operand is CallableExpr expr) {
+          }
+          else if (operand is CallableExpr expr) {
             return new CallableStatment(expr.id, expr.args);
-          } else if (operand is NativeCallableExpr nExpr) {
+          }
+          else if (operand is NativeCallableExpr nExpr) {
             return NativeCallableStatement.FromExpr(nExpr);
           }
           return new Error($"Failed to start identifier statement {operand}");
@@ -66,9 +69,98 @@ public class Parser(IEnumerable<Token> tokens) {
       case TType.Func: {
           return ParseFuncDecl();
         }
+      case TType.If: {
+          return ParseIf();
+        }
+      case TType.Else: {
+          return new Error("An else must be preceeded by an if statement.");
+        }
+      case TType.For: {
+          return ParseFor();
+        }
+      case TType.Continue: {
+          return ParseContinue();
+        }
+      case TType.Return: {
+          return ParseReturn();
+        }
+      case TType.Break: {
+          return ParseBreak();
+        }
+
       default: return new Error($"Failed to parse keyword {token}");
     }
   }
+  private Statement ParseBreak() {
+    return new Break();
+  }
+  private Statement ParseReturn() {
+    var expr = ParseExpression();
+    return new Return(expr);
+  }
+  private Statement ParseContinue() {
+    return new Continue();
+  }
+  private Statement ParseFor() {
+    if (Peek().type == TType.LParen) {
+        Eat();
+    }
+    Statement? decl = null;
+    Expression? condition = null;
+    Statement? inc = null;
+
+    if (Peek().type == TType.LCurly) {
+        return new For(null, null, null, ParseBlock());
+    }
+
+    if (Peek().type == TType.Identifier) {
+        var idTok = Peek();
+        var iden = (ParseOperand() as Identifier)!;
+        
+        if (Peek().type == TType.Assign) {
+            decl = ParseDeclOrAssign(iden);
+        } else {
+            tokens.Push(idTok);
+            condition = ParseExpression();
+        }
+    }
+
+    if (Peek().type == TType.Comma) {
+        Eat();
+        condition = ParseExpression();
+    }
+
+    if (Peek().type == TType.Comma) {
+        Eat();
+        var iden = (ParseOperand() as Identifier)!;
+        inc = ParseDeclOrAssign(iden) as Assignment;
+    }
+    
+    return new For(decl, condition, inc, ParseBlock());
+  }
+  private Statement ParseElse(If ifStmnt) {
+    Eat(); // consume else.
+    if (Peek().type == TType.If) {
+      Eat();
+      var @if = ParseIf();
+      return new Else((@if as If)!);
+    } else {
+      return new Else(ParseBlock());
+    }
+    
+  }
+  
+  private Statement ParseIf() {
+    var condition = ParseExpression();
+    var block = ParseBlock();
+    var ifStmnt = new If(condition, block);
+    if (Peek().type == TType.Else) {
+      var @else = ParseElse(ifStmnt);
+      ifStmnt.@else = @else as Else;
+    }
+    return ifStmnt;
+  }
+
   private Statement ParseIdentifierStatement(Identifier identifier) {
     switch (Peek().type) {
       case TType.Assign: {
@@ -84,13 +176,13 @@ public class Parser(IEnumerable<Token> tokens) {
     // we parse a single token here and make an iden to prevent parsing issues.
     // otherwise iden() is recognized as a fn call, wheras we want that to be treated as
     // a parameterless fn call.
-    var name = Expect(TType.Identifier); 
+    var name = Expect(TType.Identifier);
     var parameters = ParseParameters();
     Statement.CatchError(parameters);
     var body = ParseBlock();
     var id = new Identifier(name.value);
     var @params = (parameters as Parameters)!;
-    var func = new FuncDecl(id, @params, body);;
+    var func = new FuncDecl(id, @params, body); ;
     ASTNode.Context.TrySet(id, new Callable(func.body, @params));
     return func;
   }
@@ -99,13 +191,13 @@ public class Parser(IEnumerable<Token> tokens) {
     List<Statement> statements = [];
     var next = Peek();
     while (next.type != TType.RCurly) {
-      
+
       if (next.type == TType.Newline) {
         Eat();
         next = Peek();
         continue;
       }
-      
+
       var statement = ParseStatement();
       Statement.CatchError(statement);
       statements.Add(statement);
@@ -130,7 +222,7 @@ public class Parser(IEnumerable<Token> tokens) {
   private static Error UnexpectedEOI() {
     return new Error("Unexpceted end of input");
   }
-  
+
   private Expression ParseCallExpr(Token token) {
     List<Expression> args = ParseArguments();
     Identifier iden = new(token.value);
@@ -144,11 +236,11 @@ public class Parser(IEnumerable<Token> tokens) {
   }
   private Statement ParseCall(Identifier iden) {
     List<Expression> args = ParseArguments();
-    
+
     if (NativeFunctions.TryCreateCallable(iden.name, out var callable)) {
       return new NativeCallableStatement(callable, args);
     }
-    
+
     if (ASTNode.Context.TryGet(iden, out _)) {
       return new CallableStatment(iden, args);
     }
@@ -177,12 +269,12 @@ public class Parser(IEnumerable<Token> tokens) {
       return new Declaration(iden, value);
     }
   }
-    
-    private Expression ParseExpression() {
+  
+  private Expression ParseExpression() {
     return ParseLogicalOr();
-    }
-    
-    private Expression ParseLogicalOr() {
+  }
+  
+  private Expression ParseLogicalOr() {
     Expression left = ParseLogicalAnd();
 
     while (Peek().type == TType.LogicalOr) {
@@ -193,9 +285,9 @@ public class Parser(IEnumerable<Token> tokens) {
     }
 
     return left;
-    }
-    
-    private Expression ParseLogicalAnd() {
+  }
+
+  private Expression ParseLogicalAnd() {
     Expression left = ParseEquality();
 
     while (Peek().type == TType.LogicalAnd) {
@@ -206,9 +298,9 @@ public class Parser(IEnumerable<Token> tokens) {
     }
 
     return left;
-    }
-    
-    private Expression ParseEquality() {
+  }
+
+  private Expression ParseEquality() {
     Expression left = ParseComparison();
 
     while (Peek().type == TType.Equal || Peek().type == TType.NotEqual) {
@@ -219,9 +311,9 @@ public class Parser(IEnumerable<Token> tokens) {
     }
 
     return left;
-    }
-    
-    private Expression ParseComparison() {
+  }
+
+  private Expression ParseComparison() {
     Expression left = ParseTerm();
 
     while (Peek().type == TType.Greater || Peek().type == TType.Less ||
@@ -233,9 +325,9 @@ public class Parser(IEnumerable<Token> tokens) {
     }
 
     return left;
-    }
-    
-    private Expression ParseTerm() {
+  }
+
+  private Expression ParseTerm() {
     Expression left = ParseFactor();
 
     while (Peek().type == TType.Multiply || Peek().type == TType.Divide) {
@@ -246,9 +338,9 @@ public class Parser(IEnumerable<Token> tokens) {
     }
 
     return left;
-    }
-    
-    private Expression ParseFactor() {
+  }
+
+  private Expression ParseFactor() {
     Expression left = ParseOperand();
 
     while (Peek().type == TType.Plus || Peek().type == TType.Minus) {
@@ -259,8 +351,8 @@ public class Parser(IEnumerable<Token> tokens) {
     }
 
     return left;
-    }
-  
+  }
+
   private Expression ParseOperand() {
     var token = Peek();
 
@@ -271,9 +363,9 @@ public class Parser(IEnumerable<Token> tokens) {
           return new AnonObject(block, ASTNode.Context.PopScope());
         }
       case TType.String: {
-        Eat();
-        return new Operand(new String(token.value));
-      }
+          Eat();
+          return new Operand(new String(token.value));
+        }
       case TType.Float:
         Eat();
         return new Operand(Number.FromFloat(token.value));
@@ -296,5 +388,25 @@ public class Parser(IEnumerable<Token> tokens) {
     }
   }
 
+
+}
+
+internal class Else : Statement {
+  private If? @if;
+  private Block? block;
   
+  public Else(If @if) {
+    this.@if = @if;
+  }
+  public Else(Block block) {
+    this.block = block;
+  }
+  
+  public override object? Evaluate() {
+    if (@if != null) {
+      return @if.Evaluate();
+    } else {
+      return block?.Evaluate();
+    }
+  }
 }

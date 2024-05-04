@@ -11,13 +11,14 @@ public enum ValueFlags {
   Bool = 1 << 4,
 }
 
-public class Value(object? value, ValueFlags flags = ValueFlags.Number) {
+public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
   public override string ToString() {
     return value?.ToString() ?? "null";
   }
   public readonly ValueFlags flags = flags;
-  public static readonly Value Default = new(null);
   internal protected object? value = value;
+  
+  public static readonly Value Default = new(null);
   public T Get<T>() {
     if (value is T t) {
       return t;
@@ -27,8 +28,8 @@ public class Value(object? value, ValueFlags flags = ValueFlags.Number) {
   public void Set(object? value) {
     this.value = value;
   }
-
-
+  
+  
   public virtual Value Divide(Value other) {
     return Default;
   }
@@ -42,34 +43,24 @@ public class Value(object? value, ValueFlags flags = ValueFlags.Number) {
     return Default;
   }
   public virtual Bool Or(Value other) {
-    return Bool.False;
+    return Bool.Default;
   }
   public virtual Bool And(Value other) {
-    return Bool.False;
+    return Bool.Default;
   }
   public virtual Bool GreaterThan(Value other) {
-    return Bool.False;
+    return Bool.Default;
   }
   public virtual Bool LessThan(Value other) {
-    return Bool.False;
+    return Bool.Default;
   }
   public virtual Bool GreaterThanOrEqual(Value other) {
-    return Bool.False;
+    return Bool.Default;
   }
   public virtual Bool LessThanOrEqual(Value other) {
-    return Bool.False;
+    return Bool.Default;
   }
-
-  public override bool Equals(object? obj) {
-    if (obj is Value value) {
-      return value.value == this.value;
-    }
-    return false;
-  }
-
-  public override int GetHashCode() {
-    return value?.GetHashCode() ?? 0;
-  }
+    
 }
 
 public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
@@ -98,6 +89,46 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
   public override int GetHashCode() {
     return scope.variables.GetHashCode();
   }
+
+  public override Value Divide(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Multiply(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Subtract(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Add(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool Or(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool And(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool GreaterThan(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool LessThan(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool GreaterThanOrEqual(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool LessThanOrEqual(Value other) {
+    return Bool.False;
+  }
 }
 
 public class Callable(Block block, Parameters parameters) : Value(null, ValueFlags.Callable) {
@@ -118,7 +149,7 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
       Statement.CatchError(statement.Evaluate());
     }
     ASTNode.Context.PopScope();
-    return Default;
+    return Callable.Default;
   }
 
   public static List<Value> GetArgsValueList(List<Expression> args) {
@@ -139,6 +170,54 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
     }
     builder.Append(')');
     return builder.ToString();
+  }
+
+  public override Value Divide(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Multiply(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Subtract(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Add(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool Or(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool And(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool GreaterThan(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool LessThan(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool GreaterThanOrEqual(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool LessThanOrEqual(Value other) {
+    return Bool.False;
+  }
+
+  public override bool Equals(object? obj) {
+    return obj is Callable c && c == this;
+  }
+  
+  public override int GetHashCode() {
+    return this.block.GetHashCode();
   }
 }
 
@@ -174,6 +253,38 @@ public class Bool(bool value) : Value(value, ValueFlags.Bool) {
     }
     return Bool.False;
   }
+
+  public override Value Divide(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Multiply(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Subtract(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Add(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool GreaterThan(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool LessThan(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool GreaterThanOrEqual(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool LessThanOrEqual(Value other) {
+    return Bool.False;
+  }
 }
 public class String(string value) : Value(value, ValueFlags.String) {
   public override Value Add(Value other) {
@@ -182,6 +293,15 @@ public class String(string value) : Value(value, ValueFlags.String) {
     }
     return Value.Default;
   }
+
+  public override Bool And(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Divide(Value other) {
+    return Bool.False;
+  }
+
   public override bool Equals(object? obj) {
     if (obj is String s) {
       if (s.value is string s1 && this.value is string s2) {
@@ -198,6 +318,33 @@ public class String(string value) : Value(value, ValueFlags.String) {
     return 0;
   }
 
+  public override Bool GreaterThan(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool GreaterThanOrEqual(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool LessThan(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool LessThanOrEqual(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Multiply(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool Or(Value other) {
+    return Bool.False;
+  }
+
+  public override Value Subtract(Value other) {
+    return Bool.False;
+  }
 }
 
 public class Number : Value {
@@ -222,7 +369,7 @@ public class Number : Value {
     object? right = (other as Number)?.GetNumber();
     if (right == null)
       return Default;
-    return new(Convert.ToSingle(left) / Convert.ToSingle(right));
+    return new Number(Convert.ToSingle(left) / Convert.ToSingle(right));
   }
   
   public override Value Multiply(Value other) {
@@ -233,7 +380,7 @@ public class Number : Value {
     object? right = (other as Number)?.GetNumber();
     if (right == null)
       return Default;
-    return new(Convert.ToSingle(left) * Convert.ToSingle(right));
+    return new Number(Convert.ToSingle(left) * Convert.ToSingle(right));
   }
   
   public override Value Subtract(Value other) {
@@ -244,18 +391,18 @@ public class Number : Value {
     object? right = (other as Number)?.GetNumber();
     if (right == null)
       return Default;
-    return new(Convert.ToSingle(left) - Convert.ToSingle(right));
+    return new Number(Convert.ToSingle(left) - Convert.ToSingle(right));
   }
   
   public override  Value Add(Value other) {
     object? left = GetNumber();
     if (left == null)
       return Default;
-
+    
     object? right = (other as Number)?.GetNumber();
     if (right == null)
       return Default;
-    return new(Convert.ToSingle(left) + Convert.ToSingle(right));
+    return new Number(Convert.ToSingle(left) + Convert.ToSingle(right));
   }
   public override Bool GreaterThan(Value other) {
     if (other is Number n) {
@@ -366,4 +513,11 @@ public class Number : Value {
     return 0;
   }
 
+  public override Bool Or(Value other) {
+    return Bool.False;
+  }
+
+  public override Bool And(Value other) {
+    return Bool.False;
+  }
 }

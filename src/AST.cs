@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace PixelEngine.Lang;
 public class AnonObject(Block block, Scope scope) : Expression {
   private readonly Block block = block;
@@ -82,35 +84,37 @@ public class BinExpr(Expression left, Expression right) : Expression {
   public override Value Evaluate() {
     var left = this.left.Evaluate();
     var right = this.right.Evaluate();
-
+    
+    if (op == TType.Equal) {
+      return new Bool(left?.Equals(right) ?? false);
+    } else if (op == TType.NotEqual) {
+      return new Bool((!left?.Equals(right)) ?? false);
+    }
+    
     switch (op) {
       case TType.Plus:
-        return left.Add(right);
+        return left?.Add(right ?? Value.Default) ?? Value.Default;
       case TType.Minus:
-        return left.Subtract(right);
+        return left?.Subtract(right ?? Value.Default) ?? Value.Default;
       case TType.Divide:
-        return left.Divide(right);
+        return left?.Divide(right ?? Value.Default)?? Value.Default;
       case TType.Multiply:
-        return left.Multiply(right);
+        return left?.Multiply(right ?? Value.Default) ?? Value.Default;
       case TType.LogicalOr:
-        return left.Or(right);
+        return left?.Or(right ?? Value.Default) ?? Value.Default;
       case TType.LogicalAnd:
-        return left.And(right);
-      case TType.Equal:
-        return new Bool(left.Equals(right));
-      case TType.NotEqual:
-        return new Bool(!left.Equals(right));
+        return left?.And(right ?? Value.Default) ?? Value.Default;
       case TType.Greater:
-        return left.GreaterThan(right);
+        return left?.GreaterThan(right ?? Value.Default) ?? Value.Default;
       case TType.Less:
         return left.LessThan(right);
       case TType.GreaterEq:
         return left.GreaterThanOrEqual(right);
       case TType.LessEq:
-        return left.LessThanOrEqual(right);
+        return left?.LessThanOrEqual(right ?? Value.Default) ?? Value.Default;
       case TType.Assign:
-        left.Set(right);
-        return left;
+        left?.Set(right);
+        return left!;
       default:
         return Number.Default;
     }
@@ -149,6 +153,9 @@ public class Block(List<Statement> statements) : Statement{
   
   public override object? Evaluate() {
     foreach (var statement in statements) {
+      if (statement is Continue || statement is Break || statement is Return) {
+        return statement;
+      }
       CatchError(statement.Evaluate());
     }
     return null;
@@ -178,14 +185,12 @@ public class Parameters(List<Identifier> names) : Statement {
     // but this probably has to be handled externally by teh fn call.
   }
 }
-
 public class ExprError(string message) : Expression {
   private readonly string message = message;
   public override Value Evaluate() {
     throw new Exception(message);
   }
 }
-
 public class NativeCallableExpr(NativeCallable callable, List<Expression> args) : Expression {
   public readonly NativeCallable callable = callable;
   public readonly List<Expression> args = args;
@@ -193,7 +198,79 @@ public class NativeCallableExpr(NativeCallable callable, List<Expression> args) 
      return callable.Call(args);
   }
 }
-
+public class Break : Statement {
+  public override object? Evaluate() {
+    return null;
+  }
+}
+public class Continue : Statement {
+  public override object? Evaluate() {
+    return null;
+  }
+}
+public class Return(Expression value) : Statement {
+  private readonly Expression value = value;
+  public override object? Evaluate() {
+    return value.Evaluate();
+  }
+}
+public class For(Statement? decl, Expression? condition, Statement? increment, Block block) : Statement {
+  private readonly Statement? decl = decl;
+  private readonly Expression? condition = condition;
+  private readonly Statement? increment = increment;
+  private readonly Block block = block;
+  public override object? Evaluate() {
+    CatchError(decl?.Evaluate());
+    if (condition != null) {
+      while (true) {
+        var conditionResult = condition?.Evaluate();
+        if (conditionResult is not Bool b || b.Equals(Bool.False)) {
+          return null;
+        }
+        
+        
+        var blockResult = block.Evaluate();
+        
+        if (ASTNode.Context.TryGet(new Identifier("i"), out var v)) {
+          Console.WriteLine($"i == {v}");
+        }
+        
+        _ = increment?.Evaluate();
+        
+        if (ASTNode.Context.TryGet(new Identifier("i"), out var v1)) {
+          Console.WriteLine($"i == {v1}");
+        }
+        CatchError(blockResult);
+        if (blockResult is Break) {
+          break;
+        }
+        if (blockResult is Continue) {
+          continue;
+        }
+        if (blockResult is Return ret) {
+          return ret.Evaluate();
+        }
+      }
+    } else {
+      while (true) {
+        _ = increment?.Evaluate();
+        var blockResult = block.Evaluate();
+        CatchError(blockResult);
+        if (blockResult is Break) {
+          break;
+        }
+        if (blockResult is Continue) {
+          continue;
+        }
+        if (blockResult is Return ret) {
+          return ret.Evaluate();
+        }
+        
+      }
+    }
+    return null;
+  }
+}
 public class NativeCallableStatement(NativeCallable callable, List<Expression> args) : Statement {
   public readonly NativeCallable callable = callable;
   public readonly List<Expression> args = args;
@@ -204,5 +281,26 @@ public class NativeCallableStatement(NativeCallable callable, List<Expression> a
 
   public override object? Evaluate() {
     return callable.Call(args);
+  }
+}
+public class If(Expression condition, Block block) : Statement{
+  private readonly Expression condition = condition;
+  private readonly Block block = block;
+  internal Else? @else;
+
+  public override object? Evaluate() {
+    if (condition.Evaluate() is Bool b && b.Equals(Bool.True)) {
+      var result = block.Evaluate();
+      CatchError(result);
+      if (result is Return ret) {
+        return ret.Evaluate();
+      }
+      if (result is Continue || result is Break) {
+        return result;
+      }
+    } else {
+      return @else?.Evaluate();
+    }
+    return null;
   }
 }

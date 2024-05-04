@@ -15,13 +15,29 @@ const string TEST_CODE = @"
 //   value = value + 1
 //   print(value)
 // }
+
 // inc(1)
 
-value = ""string"" == ""string""
+// value = ""string"" == ""string""
 
-value = object == object
+// value = object == object
 
-print(value)
+// print(value)
+
+for {
+  print(""Loop"")
+  break
+}
+
+if 1 == 0 {
+  print(""was true"")
+} else if 1 == 2 {
+  print(""was true x2"")
+} else {
+  print(""none true"")
+}
+
+
 ";
 
 var tokens = lexer.Lex(TEST_CODE);

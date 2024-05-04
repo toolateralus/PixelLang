@@ -41,6 +41,13 @@ public enum TType {
   GreaterEq,
   Less,
   Greater,
+  If,
+  Else,
+  For,
+  Continue,
+  Return,
+  Break,
+  Comma,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -56,7 +63,13 @@ public class Token(int loc, int col, string val, TFamily fam, TType type) {
 
 public class Lexer {
   public readonly Dictionary<string, TType> Keywords = new() {
-    ["func"] = TType.Func
+    ["func"] = TType.Func,
+    ["if"] = TType.If,
+    ["else"] = TType.Else,
+    ["for"] = TType.For,
+    ["continue"] = TType.Continue,
+    ["return"] = TType.Return,
+    ["break"] = TType.Break,
   };
   
   public readonly Dictionary<string, TType> Operators = new() {
@@ -64,7 +77,7 @@ public class Lexer {
     ["-"] = TType.Minus,
     ["*"] = TType.Multiply,
     ["/"] = TType.Divide,
-    
+    [","] = TType.Comma,
     ["||"] = TType.LogicalOr,
     ["&&"] = TType.LogicalAnd,
     
@@ -75,8 +88,6 @@ public class Lexer {
     ["<"] = TType.Less,
     [">="] = TType.GreaterEq,
     ["<="] = TType.LessEq,
-    
-    ["!"] = TType.Not,
     
     ["("] = TType.LParen,
     [")"] = TType.RParen,
