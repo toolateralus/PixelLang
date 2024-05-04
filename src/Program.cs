@@ -4,6 +4,7 @@ using PixelEngine.Lang;
 var lexer = new Lexer();
 
 
+#pragma warning disable CS0219 
 
 
 const string TEST_CODE = @"
@@ -56,22 +57,33 @@ print(i == 1000000)
 
 ";
 
-const string TEST_2 = @"
+const string TEST_UNARY = @"
   v = 1 == 1
-  
   v = !v
-  
   print(v)
   print(""Expected false"")
-  
-  
   v = -1
-  
   print(v)
   print(""Expected -1"")
 ";
 
-var tokens = lexer.Lex(TEST_2);
+const string TEST_DOT = @"
+object = {
+  field = 10
+}
+
+print(object.field)
+
+object.field = 100
+
+print(object.field)
+
+
+";
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
+
+
+var tokens = lexer.Lex(TEST_DOT);
 
 tokens.Reverse();
 

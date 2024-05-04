@@ -44,9 +44,13 @@ public class Parser(IEnumerable<Token> tokens) {
           }
           else goto default; // err
         case TFamily.Identifier:
-          var operand = ParseOperand();
+          var operand = ParseDot();
+          
           if (operand is Identifier id) {
             return ParseIdentifierStatement(id);
+          }
+          else if (operand is DotExpr dot) {
+            return ParseLValueStatement(dot);
           }
           else if (operand is CallableExpr expr) {
             return new CallableStatment(expr.id, expr.args);
@@ -64,6 +68,13 @@ public class Parser(IEnumerable<Token> tokens) {
     }
     return UnexpectedEOI();
   }
+
+  private Statement ParseLValueStatement(DotExpr dot) {
+    Expect(TType.Assign);
+    var value = ParseExpression();
+    return new LValue(dot, value);
+  }
+
   private Statement ParseKeyword(Token token) {
     switch (token.type) {
       case TType.Func: {
@@ -356,10 +367,20 @@ public class Parser(IEnumerable<Token> tokens) {
   
   private Expression ParseDot() {
     Expression left = ParseOperand();
+    
+    if (left is not Identifier leftID) {
+      return left;
+    }
+    
     while (Peek().type == TType.Dot) {
-      TType op = Eat().type;
+      Eat();
       Expression right = ParseOperand();
-      left = new BinExpr(left, right) { op = op };
+      
+      if (right is not Identifier rightID) {
+        return new ExprError("Cannot do a dot operation on non-identifiers");
+      }
+      
+      left = new DotExpr(leftID, rightID);
     }
     return left;
   }
@@ -407,3 +428,12 @@ public class Parser(IEnumerable<Token> tokens) {
 
 }
 
+internal class LValue(DotExpr dot, Expression value) : Statement {
+  private readonly DotExpr dot = dot;
+  private readonly Expression value = value;
+  
+  public override object? Evaluate() {
+    dot.Assign(value.Evaluate());
+    return null;
+  }
+}

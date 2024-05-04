@@ -76,22 +76,47 @@ public class CallableExpr(Identifier id, List<Expression> args) : Expression {
 public class Else : Statement {
   private readonly If? @if;
   private readonly Block? block;
-  
+
   public Else(If @if) {
     this.@if = @if;
   }
   public Else(Block block) {
     this.block = block;
   }
-  
+
   public override object? Evaluate() {
     if (@if != null) {
       return @if.Evaluate();
-    } else {
+    }
+    else {
       return block?.Evaluate();
     }
   }
 }
+
+
+public class DotExpr(Identifier left, Identifier right) : Expression {
+  public readonly Identifier left = left;
+  public readonly Identifier right = right;
+
+  public override Value Evaluate() {
+    var leftValue = left.Evaluate();
+    if (leftValue is not Object obj) {
+      throw new Exception("Left-hand side of dot operator must be an object");
+    }
+    return obj.GetMember(right);
+  }
+  
+  public void Assign(Value value) {
+    var leftValue = left.Evaluate();
+    if (leftValue is not Object obj) {
+      throw new Exception("Left-hand side of dot operator must be an object");
+    }
+    
+    obj.SetMember(right, value);
+  }
+}
+
 public class BinExpr(Expression left, Expression right) : Expression {
   public Expression left = left;
   public Expression right = right;
@@ -99,10 +124,7 @@ public class BinExpr(Expression left, Expression right) : Expression {
   public override Value Evaluate() {
 
     var left = this.left.Evaluate();
-    //Console.WriteLine($"Left : {left}");
     var right = this.right.Evaluate();
-    //Console.WriteLine($"Right : {right}");
-    //Console.WriteLine($"Op : {op}");
 
     if (op == TType.Equal) {
       return new Bool(left.Equals(right));
@@ -126,9 +148,9 @@ public class BinExpr(Expression left, Expression right) : Expression {
       _ =>
          Number.Default,
     };
-    
+
     //Console.WriteLine($"Result : {result}");
-    
+
     return result;
   }
 }
@@ -313,11 +335,12 @@ public class If(Expression condition, Block block) : Statement {
 public class UnaryExpr(TType type, Expression operand) : Expression {
   public readonly TType op = type;
   public readonly Expression operand = operand;
-  
+
   public override Value Evaluate() {
     if (op == TType.Minus) {
       return operand.Evaluate().Negate();
-    } else if (op == TType.Not) {
+    }
+    else if (op == TType.Not) {
       return operand.Evaluate().Not();
     }
     return Value.Default;
