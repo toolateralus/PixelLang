@@ -17,7 +17,9 @@ const string TEST_CODE = @"
 // }
 // inc(1)
 
-value = ""I am a string"" + ""me too""
+value = ""string"" == ""string""
+
+value = 20 + 20
 
 print(value)
 ";
