@@ -6,15 +6,17 @@ var lexer = new Lexer();
 const string TEST_CODE = @"
 object = {
   field_1 = 10 * 2 * 300 * (20 + 1)
-  field_2 = 10
+  field_2 = 2 + 2
 }
 field = 10
 
-func print (value) {
-  
+
+func add(value) {
+  value = value + 1
 }
 
 print(object)
+print(field + 2)
 ";
 
 var tokens = lexer.Lex(TEST_CODE);

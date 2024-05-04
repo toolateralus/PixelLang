@@ -150,7 +150,8 @@ public class Parser(IEnumerable<Token> tokens) {
       return new Assignment(iden, value);
     }
     else {
-      ASTNode.Context.TrySet(iden, Value.Default);
+      var val = value.Evaluate();
+      ASTNode.Context.TrySet(iden, value.Evaluate() ?? Value.Default);
       return new Declaration(iden, value);
     }
   }
@@ -193,10 +194,10 @@ public class Parser(IEnumerable<Token> tokens) {
 
       case TType.Float:
         Eat();
-        return new Operand(new Value(float.Parse(token.value)));
+        return new Operand(Number.FromFloat(token.value));
       case TType.Int:
         Eat();
-        return new Operand(new Value(int.Parse(token.value)));
+        return new Operand(Number.FromInt(token.value));
       case TType.Identifier:
         Eat();
         return new Identifier(token.value);

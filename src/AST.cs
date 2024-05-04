@@ -83,22 +83,22 @@ public class BinExpr(Expression left, Expression right) : Expression {
     switch (op) {
       case TType.Plus:{
         var left = this.left.Evaluate() as Number;
-        left?.Add(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
+        left = left?.Add(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
         return left!;
       }
       case TType.Minus: {
         var left = this.left.Evaluate() as Number;
-        left?.Subtract(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
+        left = left?.Subtract(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
         return left!;
       }
       case TType.Divide: {
         var left = this.left.Evaluate() as Number;
-        left?.Divide(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
+        left = left?.Divide(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
         return left!;
       }
       case TType.Multiply: {
         var left = this.left.Evaluate() as Number;
-        left?.Multiply(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
+        left = left?.Multiply(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
         return left!;
       }
       case TType.Assign: {

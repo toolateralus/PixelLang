@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace PixelEngine.Lang;
 
 [Flags]
@@ -9,6 +11,9 @@ public enum ValueFlags {
 }
 
 public class Value(object? value, ValueFlags flags = ValueFlags.Number) {
+  public override string ToString() {
+    return value?.ToString() ?? "null";
+  }
   public readonly ValueFlags flags = flags;
   public static readonly Value Default = new(null);
   internal protected object? value = value;
@@ -30,6 +35,17 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
   public Scope scope = scope;
   
   public static new readonly Object Default = new(null!, null!);
+
+  public override string ToString() {
+    StringBuilder builder = new();
+    builder.AppendLine("{");
+    foreach (var variable in scope.variables) {
+      builder.AppendLine($"\"{variable.Key}\" : {variable.Value.ToString()}");
+    }
+    builder.AppendLine("}");
+    return builder.ToString();
+  }
+
 }
 
 public class Callable(Block block, Parameters parameters) : Value(null, ValueFlags.Callable) {
@@ -60,8 +76,17 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
       var value = arg.Evaluate();
       values.Add(value);
     }
-
+    
     return values;
+  }
+  public override string ToString() {
+    StringBuilder builder = new();
+    builder.Append("callable(");
+    foreach (var p in parameters.names) {
+      builder.Append(p.name);
+    }
+    builder.Append(')');
+    return builder.ToString();
   }
 }
 
@@ -82,44 +107,47 @@ public class Number : Value {
     return left;
   }
   public Number Divide(Number other) {
-    object? left = GetNumber();
-    if (left == null) 
-      return Default;
-      
-    object? right = other.GetNumber();
-    if (right == null)
-      return Default;
-    return new((float)left / (float)right);
+      object? left = GetNumber();
+      if (left == null) 
+        return Default;
+        
+      object? right = other.GetNumber();
+      if (right == null)
+        return Default;
+      return new(Convert.ToSingle(left) / Convert.ToSingle(right));
   }
+
   public Number Multiply(Number other) {
-    object? left = GetNumber();
-    if (left == null) 
-      return Default;
-      
-    object? right = other.GetNumber();
-    if (right == null)
-      return Default;
-    return new((float)left * (float)right);
+      object? left = GetNumber();
+      if (left == null) 
+        return Default;
+        
+      object? right = other.GetNumber();
+      if (right == null)
+        return Default;
+      return new(Convert.ToSingle(left) * Convert.ToSingle(right));
   }
+
   public Number Subtract(Number other) {
-    object? left = GetNumber();
-    if (left == null) 
-      return Default;
-      
-    object? right = other.GetNumber();
-    if (right == null)
-      return Default;
-    return new((float)left - (float)right);
+      object? left = GetNumber();
+      if (left == null) 
+        return Default;
+        
+      object? right = other.GetNumber();
+      if (right == null)
+        return Default;
+      return new(Convert.ToSingle(left) - Convert.ToSingle(right));
   }
+
   public Number Add(Number other) {
-    object? left = GetNumber();
-    if (left == null) 
-      return Default;
-      
-    object? right = other.GetNumber();
-    if (right == null)
-      return Default;
-    return new((float)left+ (float)right);
+      object? left = GetNumber();
+      if (left == null) 
+        return Default;
+        
+      object? right = other.GetNumber();
+      if (right == null)
+        return Default;
+      return new(Convert.ToSingle(left) + Convert.ToSingle(right));
   }
   
 }
