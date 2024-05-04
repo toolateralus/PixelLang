@@ -74,7 +74,7 @@ public class Parser(IEnumerable<Token> tokens) {
     var value = ParseExpression();
     return new LValue(dot, value);
   }
-
+  
   private Statement ParseKeyword(Token token) {
     switch (token.type) {
       case TType.Func: {
@@ -364,24 +364,16 @@ public class Parser(IEnumerable<Token> tokens) {
     return left;
   }
   
-  
   private Expression ParseDot() {
     Expression left = ParseOperand();
-    
-    if (left is not Identifier leftID) {
-      return left;
-    }
-    
+
     while (Peek().type == TType.Dot) {
       Eat();
       Expression right = ParseOperand();
-      
-      if (right is not Identifier rightID) {
-        return new ExprError("Cannot do a dot operation on non-identifiers");
-      }
-      
-      left = new DotExpr(leftID, rightID);
+
+      left = new DotExpr(left, right);
     }
+
     return left;
   }
   
@@ -395,9 +387,10 @@ public class Parser(IEnumerable<Token> tokens) {
     
     switch (token.type) {
       case TType.LCurly: {
-          ASTNode.Context.PushScope();
+          var scope = ASTNode.Context.PushScope();
           var block = ParseBlock();
-          return new AnonObject(block, ASTNode.Context.PopScope());
+          ASTNode.Context.PopScope();
+          return new AnonObject(block, scope);
         }
       case TType.String: {
           Eat();
@@ -426,14 +419,4 @@ public class Parser(IEnumerable<Token> tokens) {
   }
 
 
-}
-
-internal class LValue(DotExpr dot, Expression value) : Statement {
-  private readonly DotExpr dot = dot;
-  private readonly Expression value = value;
-  
-  public override object? Evaluate() {
-    dot.Assign(value.Evaluate());
-    return null;
-  }
 }

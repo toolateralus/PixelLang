@@ -12,10 +12,14 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
   
   public override string ToString() {
     StringBuilder builder = new();
+    if (scope == null) {
+      builder.Append("NULL");
+      return builder.ToString();
+    }
     builder.AppendLine("{");
     foreach (var variable in scope.variables) {
-      builder.AppendLine($"\"{variable.Key}\" : {variable.Value.ToString()}");
-    }
+        builder.AppendLine($"   \"{variable.Key}\" : {variable.Value.ToString()}");
+      }
     builder.AppendLine("}");
     return builder.ToString();
   }

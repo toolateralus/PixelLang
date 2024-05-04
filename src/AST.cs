@@ -94,26 +94,73 @@ public class Else : Statement {
   }
 }
 
+public class DotExpr : Expression {
+  public readonly Expression left;
+  public readonly Expression right;
 
-public class DotExpr(Identifier left, Identifier right) : Expression {
-  public readonly Identifier left = left;
-  public readonly Identifier right = right;
-
+  public DotExpr(Expression left, Expression right) {
+    this.left = left;
+    this.right = right;
+  }
+  public Value Evaluate(Object context) {
+    if (right is Identifier identifier) {
+      return context.GetMember(identifier);
+    }
+    
+    if (right is DotExpr dotExpr) {
+      var intermediate = context.GetMember((Identifier)dotExpr.left);
+      if (intermediate is not Object obj) {
+        throw new Exception("Intermediate object in dot expression must be an object");
+      }
+      return dotExpr.Evaluate(obj);
+    }
+    
+    throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
+  }
   public override Value Evaluate() {
     var leftValue = left.Evaluate();
     if (leftValue is not Object obj) {
       throw new Exception("Left-hand side of dot operator must be an object");
     }
-    return obj.GetMember(right);
+    
+    if (right is DotExpr dotExpr) {
+      return dotExpr.Evaluate(obj);
+    }
+    
+    if (right is Identifier identifier) {
+      return obj.GetMember(identifier);
+    }
+    
+    throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
   }
-  
+  public void Assign(Object context, Value value) {
+    if (right is Identifier identifier) {
+      context.SetMember(identifier, value);
+    }
+    else if (right is DotExpr dotExpr) {
+      var intermediate = context.GetMember((Identifier)dotExpr.left);
+      if (intermediate is not Object obj) {
+        throw new Exception("Intermediate object in dot expression must be an object");
+      }
+      dotExpr.Assign(obj, value);
+    }
+    else {
+      throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
+    }
+  }
   public void Assign(Value value) {
     var leftValue = left.Evaluate();
     if (leftValue is not Object obj) {
       throw new Exception("Left-hand side of dot operator must be an object");
     }
-    
-    obj.SetMember(right, value);
+
+    if (right is DotExpr dotExpr) {
+      dotExpr.Assign(obj, value);
+    }
+
+    if (right is Identifier identifier) {
+      obj.SetMember(identifier, value);
+    }
   }
 }
 
@@ -344,5 +391,14 @@ public class UnaryExpr(TType type, Expression operand) : Expression {
       return operand.Evaluate().Not();
     }
     return Value.Default;
+  }
+}
+public class LValue(DotExpr dot, Expression value) : Statement {
+  private readonly DotExpr dot = dot;
+  private readonly Expression value = value;
+
+  public override object? Evaluate() {
+    dot.Assign(value.Evaluate());
+    return null;
   }
 }
