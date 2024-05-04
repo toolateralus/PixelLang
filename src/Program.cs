@@ -19,7 +19,7 @@ const string TEST_CODE = @"
 
 value = ""string"" == ""string""
 
-value = 20 > 10
+value = object == object
 
 print(value)
 ";
