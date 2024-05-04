@@ -39,7 +39,11 @@ public class Context {
         return true;
       }
     }
-    Scopes.Peek().variables.TryAdd(id.name, value);
+    var vars = Current.variables;
+    if (!vars.TryAdd(id.name, value)) {
+      vars[id.name] = value;
+    }
+
     return false;
   }
 }

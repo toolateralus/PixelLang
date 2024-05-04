@@ -138,25 +138,25 @@ public class Parser(IEnumerable<Token> tokens) {
     
     return new For(decl, condition, inc, ParseBlock());
   }
-  private Statement ParseElse(If ifStmnt) {
+  private Else ParseElse() {
     Eat(); // consume else.
     if (Peek().type == TType.If) {
       Eat();
       var @if = ParseIf();
-      return new Else((@if as If)!);
+      return new Else(@if);
     } else {
       return new Else(ParseBlock());
     }
     
   }
   
-  private Statement ParseIf() {
+  private If ParseIf() {
     var condition = ParseExpression();
     var block = ParseBlock();
     var ifStmnt = new If(condition, block);
     if (Peek().type == TType.Else) {
-      var @else = ParseElse(ifStmnt);
-      ifStmnt.@else = @else as Else;
+      var @else = ParseElse();
+      ifStmnt.@else = @else;
     }
     return ifStmnt;
   }
@@ -256,7 +256,7 @@ public class Parser(IEnumerable<Token> tokens) {
     Expect(TType.RParen);
     return args;
   }
-
+  
   private Statement ParseDeclOrAssign(Identifier iden) {
     Expect(TType.Assign);
     var value = ParseExpression();
@@ -276,7 +276,7 @@ public class Parser(IEnumerable<Token> tokens) {
   
   private Expression ParseLogicalOr() {
     Expression left = ParseLogicalAnd();
-
+    
     while (Peek().type == TType.LogicalOr) {
       TType op = Eat().type;
       Expression right = ParseLogicalAnd();
@@ -286,7 +286,7 @@ public class Parser(IEnumerable<Token> tokens) {
 
     return left;
   }
-
+  
   private Expression ParseLogicalAnd() {
     Expression left = ParseEquality();
 
@@ -336,26 +336,42 @@ public class Parser(IEnumerable<Token> tokens) {
 
       left = new BinExpr(left, right) { op = op };
     }
-
+    
     return left;
   }
 
   private Expression ParseFactor() {
-    Expression left = ParseOperand();
-
+    Expression left = ParseDot();
+    
     while (Peek().type == TType.Plus || Peek().type == TType.Minus) {
       TType op = Eat().type;
-      Expression right = ParseOperand();
+      Expression right = ParseDot();
 
       left = new BinExpr(left, right) { op = op };
     }
 
     return left;
   }
-
+  
+  
+  private Expression ParseDot() {
+    Expression left = ParseOperand();
+    while (Peek().type == TType.Dot) {
+      TType op = Eat().type;
+      Expression right = ParseOperand();
+      left = new BinExpr(left, right) { op = op };
+    }
+    return left;
+  }
+  
   private Expression ParseOperand() {
     var token = Peek();
-
+    if (token.type == TType.Minus || token.type == TType.Not) {
+      Eat();
+      var operand = ParseOperand();
+      return new UnaryExpr(token.type, operand);
+    }
+    
     switch (token.type) {
       case TType.LCurly: {
           ASTNode.Context.PushScope();
@@ -391,22 +407,3 @@ public class Parser(IEnumerable<Token> tokens) {
 
 }
 
-internal class Else : Statement {
-  private If? @if;
-  private Block? block;
-  
-  public Else(If @if) {
-    this.@if = @if;
-  }
-  public Else(Block block) {
-    this.block = block;
-  }
-  
-  public override object? Evaluate() {
-    if (@if != null) {
-      return @if.Evaluate();
-    } else {
-      return block?.Evaluate();
-    }
-  }
-}

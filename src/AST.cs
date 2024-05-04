@@ -10,11 +10,11 @@ public class AnonObject(Block block, Scope scope) : Expression {
 }
 public abstract class ASTNode {
   public static readonly Context Context = new();
-  
+
   static ASTNode() {
     Context.PushScope(); // push a root scope.
   }
-  
+
   public abstract object? Evaluate();
 }
 public class Error(string message) : Statement {
@@ -31,10 +31,7 @@ public class Program : ASTNode {
   public readonly List<Statement> statements = [];
   public override object? Evaluate() {
     foreach (var statement in statements) {
-      var result = statement.Evaluate();
-      if (result is Error error) {
-        error.Evaluate();
-      }
+      Statement.CatchError(statement.Evaluate());
     }
     return null;
   }
@@ -50,7 +47,6 @@ public abstract class Expression : ASTNode {
 }
 public abstract class Statement : ASTNode {
   public abstract override object? Evaluate();
-  
   public static void CatchError(object? v) {
     if (v is Error e) {
       throw e.AsException();
@@ -77,47 +73,63 @@ public class CallableExpr(Identifier id, List<Expression> args) : Expression {
     throw new Exception($"Failed to call callable {id}");
   }
 }
+public class Else : Statement {
+  private readonly If? @if;
+  private readonly Block? block;
+  
+  public Else(If @if) {
+    this.@if = @if;
+  }
+  public Else(Block block) {
+    this.block = block;
+  }
+  
+  public override object? Evaluate() {
+    if (@if != null) {
+      return @if.Evaluate();
+    } else {
+      return block?.Evaluate();
+    }
+  }
+}
 public class BinExpr(Expression left, Expression right) : Expression {
   public Expression left = left;
   public Expression right = right;
   public TType op;
   public override Value Evaluate() {
+
     var left = this.left.Evaluate();
+    //Console.WriteLine($"Left : {left}");
     var right = this.right.Evaluate();
-    
+    //Console.WriteLine($"Right : {right}");
+    //Console.WriteLine($"Op : {op}");
+
     if (op == TType.Equal) {
-      return new Bool(left?.Equals(right) ?? false);
-    } else if (op == TType.NotEqual) {
-      return new Bool((!left?.Equals(right)) ?? false);
+      return new Bool(left.Equals(right));
     }
+    else if (op == TType.NotEqual) {
+      return new Bool(!left.Equals(right));
+    }
+
+    var result = op switch {
+      TType.Plus => left.Add(right),
+      TType.Minus => left.Subtract(right),
+      TType.Divide => left.Divide(right),
+      TType.Multiply => left.Multiply(right),
+      TType.LogicalOr => left.Or(right),
+      TType.LogicalAnd => left.And(right),
+      TType.Greater => left.GreaterThan(right),
+      TType.Less => left.LessThan(right),
+      TType.GreaterEq => left.GreaterThanOrEqual(right),
+      TType.LessEq => left.LessThanOrEqual(right),
+      TType.Assign => left.Set(right),
+      _ =>
+         Number.Default,
+    };
     
-    switch (op) {
-      case TType.Plus:
-        return left?.Add(right ?? Value.Default) ?? Value.Default;
-      case TType.Minus:
-        return left?.Subtract(right ?? Value.Default) ?? Value.Default;
-      case TType.Divide:
-        return left?.Divide(right ?? Value.Default)?? Value.Default;
-      case TType.Multiply:
-        return left?.Multiply(right ?? Value.Default) ?? Value.Default;
-      case TType.LogicalOr:
-        return left?.Or(right ?? Value.Default) ?? Value.Default;
-      case TType.LogicalAnd:
-        return left?.And(right ?? Value.Default) ?? Value.Default;
-      case TType.Greater:
-        return left?.GreaterThan(right ?? Value.Default) ?? Value.Default;
-      case TType.Less:
-        return left.LessThan(right);
-      case TType.GreaterEq:
-        return left.GreaterThanOrEqual(right);
-      case TType.LessEq:
-        return left?.LessThanOrEqual(right ?? Value.Default) ?? Value.Default;
-      case TType.Assign:
-        left?.Set(right);
-        return left!;
-      default:
-        return Number.Default;
-    }
+    //Console.WriteLine($"Result : {result}");
+    
+    return result;
   }
 }
 public class Declaration(Identifier id, Expression value) : Statement {
@@ -140,7 +152,7 @@ public class FuncDecl(Identifier name, Parameters parameters, Block body) : Stat
   public readonly Identifier name = name;
   public readonly Block body = body;
   public readonly Parameters parameters = parameters;
-  
+
   public override object? Evaluate() {
     if (Context.TryGet(name, out var val)) {
       return val;
@@ -148,9 +160,9 @@ public class FuncDecl(Identifier name, Parameters parameters, Block body) : Stat
     return new Error($"Failed to dereference {name}");
   }
 }
-public class Block(List<Statement> statements) : Statement{
+public class Block(List<Statement> statements) : Statement {
   public readonly List<Statement> statements = statements;
-  
+
   public override object? Evaluate() {
     foreach (var statement in statements) {
       if (statement is Continue || statement is Break || statement is Return) {
@@ -160,8 +172,8 @@ public class Block(List<Statement> statements) : Statement{
     }
     return null;
   }
-  
-  
+
+
 }
 public class Identifier(string name) : Expression {
   public readonly string name = name;
@@ -169,7 +181,7 @@ public class Identifier(string name) : Expression {
     // this will probably get more compilcated as we have lvalues / dot operation
     return name;
   }
-  
+
   public override Value Evaluate() {
     if (Context.TryGet(this, out var val)) {
       return val;
@@ -195,7 +207,7 @@ public class NativeCallableExpr(NativeCallable callable, List<Expression> args) 
   public readonly NativeCallable callable = callable;
   public readonly List<Expression> args = args;
   public override Value Evaluate() {
-     return callable.Call(args);
+    return callable.Call(args);
   }
 }
 public class Break : Statement {
@@ -227,19 +239,11 @@ public class For(Statement? decl, Expression? condition, Statement? increment, B
         if (conditionResult is not Bool b || b.Equals(Bool.False)) {
           return null;
         }
-        
-        
+
+
         var blockResult = block.Evaluate();
-        
-        if (ASTNode.Context.TryGet(new Identifier("i"), out var v)) {
-          Console.WriteLine($"i == {v}");
-        }
-        
         _ = increment?.Evaluate();
-        
-        if (ASTNode.Context.TryGet(new Identifier("i"), out var v1)) {
-          Console.WriteLine($"i == {v1}");
-        }
+
         CatchError(blockResult);
         if (blockResult is Break) {
           break;
@@ -251,7 +255,8 @@ public class For(Statement? decl, Expression? condition, Statement? increment, B
           return ret.Evaluate();
         }
       }
-    } else {
+    }
+    else {
       while (true) {
         _ = increment?.Evaluate();
         var blockResult = block.Evaluate();
@@ -265,7 +270,7 @@ public class For(Statement? decl, Expression? condition, Statement? increment, B
         if (blockResult is Return ret) {
           return ret.Evaluate();
         }
-        
+
       }
     }
     return null;
@@ -283,7 +288,7 @@ public class NativeCallableStatement(NativeCallable callable, List<Expression> a
     return callable.Call(args);
   }
 }
-public class If(Expression condition, Block block) : Statement{
+public class If(Expression condition, Block block) : Statement {
   private readonly Expression condition = condition;
   private readonly Block block = block;
   internal Else? @else;
@@ -298,9 +303,23 @@ public class If(Expression condition, Block block) : Statement{
       if (result is Continue || result is Break) {
         return result;
       }
-    } else {
+    }
+    else {
       return @else?.Evaluate();
     }
     return null;
+  }
+}
+public class UnaryExpr(TType type, Expression operand) : Expression {
+  public readonly TType op = type;
+  public readonly Expression operand = operand;
+  
+  public override Value Evaluate() {
+    if (op == TType.Minus) {
+      return operand.Evaluate().Negate();
+    } else if (op == TType.Not) {
+      return operand.Evaluate().Not();
+    }
+    return Value.Default;
   }
 }

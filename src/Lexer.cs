@@ -48,6 +48,7 @@ public enum TType {
   Return,
   Break,
   Comma,
+  Dot,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -80,6 +81,8 @@ public class Lexer {
     [","] = TType.Comma,
     ["||"] = TType.LogicalOr,
     ["&&"] = TType.LogicalAnd,
+    ["."] = TType.Dot,
+    ["!"] = TType.Not,
     
     ["=="] = TType.Equal,
     ["!="] = TType.NotEqual,

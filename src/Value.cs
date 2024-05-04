@@ -10,7 +10,6 @@ public enum ValueFlags {
   Object = 1 << 3,
   Bool = 1 << 4,
 }
-
 public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
   public override string ToString() {
     return value?.ToString() ?? "null";
@@ -19,14 +18,17 @@ public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
   internal protected object? value = value;
   
   public static readonly Value Default = new(null);
-  public T Get<T>() {
+  public bool Get<T>(out T val) {
     if (value is T t) {
-      return t;
+      val = t;
+      return true;
     }
-    return default!;
+    val = default!;
+    return false;
   }
-  public void Set(object? value) {
+  public Value Set(object? value) {
     this.value = value;
+    return this;
   }
   
   
@@ -37,6 +39,9 @@ public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
     return Default;
   }
   public virtual Value Subtract(Value other) {
+    return Default;
+  }
+  public virtual Value Not() {
     return Default;
   }
   public virtual Value Add(Value other) {
@@ -60,16 +65,18 @@ public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
   public virtual Bool LessThanOrEqual(Value other) {
     return Bool.Default;
   }
-    
+
+  public virtual Value Negate() {
+    return Number.Default;
+  }
 }
-
 public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
-
+  
   public Block block = block;
   public Scope scope = scope;
 
   public static new readonly Object Default = new(null!, null!);
-
+  
   public override string ToString() {
     StringBuilder builder = new();
     builder.AppendLine("{");
@@ -79,13 +86,14 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
     builder.AppendLine("}");
     return builder.ToString();
   }
-
+  
   public override bool Equals(object? obj) {
     if (obj is Object o) {
       return o.scope.variables == this.scope.variables;
     }
     return false;
   }
+  
   public override int GetHashCode() {
     return scope.variables.GetHashCode();
   }
@@ -130,7 +138,6 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
     return Bool.False;
   }
 }
-
 public class Callable(Block block, Parameters parameters) : Value(null, ValueFlags.Callable) {
   public Block block = block;
   public Parameters parameters = parameters;
@@ -173,7 +180,7 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
   }
 
   public override Value Divide(Value other) {
-    return Bool.False;
+    return Default;
   }
 
   public override Value Multiply(Value other) {
@@ -220,7 +227,6 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
     return this.block.GetHashCode();
   }
 }
-
 public class Bool(bool value) : Value(value, ValueFlags.Bool) {
   public static new Bool Default => False;
   public static readonly Bool False = new(false);
@@ -233,7 +239,12 @@ public class Bool(bool value) : Value(value, ValueFlags.Bool) {
     }
     return false;
   }
-
+    public override Value Not() {
+    if (this.value is bool b) {
+      return new(!b);
+    }
+    return Bool.Default;
+  }
   public override int GetHashCode() {
     if (this.value is bool b) {
       return b.GetHashCode();
@@ -311,6 +322,8 @@ public class String(string value) : Value(value, ValueFlags.String) {
     return false;
   }
 
+
+
   public override int GetHashCode() {
     if (this.value is string s) {
       return s.GetHashCode();
@@ -346,7 +359,6 @@ public class String(string value) : Value(value, ValueFlags.String) {
     return Bool.False;
   }
 }
-
 public class Number : Value {
   private Number(object? value) : base(value, ValueFlags.Number) { }
   public static Number FromInt(string value) {
@@ -357,9 +369,22 @@ public class Number : Value {
   }
   public static new readonly Number Default = FromInt("0");
   public object? GetNumber() {
-    object left = Get<int>();
-    left ??= Get<float>();
-    return left;
+    if (Get<int>(out var left)) {
+      return left;  
+    }
+    if (Get<float>(out var f)) {
+      return f;
+    }
+    return null;
+  }
+  public override Value Negate() {
+    var val = GetNumber();
+    if (val is int i) {
+      return new(-i);
+    } else if (val is float f) {
+      return new(-f);
+    }
+    return Default;
   }
   public override Value Divide(Value other) {
     object? left = GetNumber();

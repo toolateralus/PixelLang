@@ -3,26 +3,29 @@ using PixelEngine.Lang;
 
 var lexer = new Lexer();
 
+
+
+
 const string TEST_CODE = @"
-// object = {
-//   field_1 = 10 * 2 * 300 * (20 + 1)
-//   field_2 = 2 + 2
-// }
-// print(object)
-// field = 10
+object = {
+  field_1 = 10 * 2 * 300 * (20 + 1)
+  field_2 = 2 + 2
+}
+print(object)
+field = 10
 
-// func inc(value) {
-//   value = value + 1
-//   print(value)
-// }
+func inc(value) {
+  value = value + 1
+  print(value)
+}
 
-// inc(1)
+inc(1)
 
-// value = ""string"" == ""string""
+value = ""string"" == ""string""
 
-// value = object == object
+value = object == object
 
-// print(value)
+print(value)
 
 for {
   print(""Loop"")
@@ -37,10 +40,38 @@ if 1 == 0 {
   print(""none true"")
 }
 
+i = 0
+i = i + 2
+i = i + 2
+
+for {
+  break  
+}
+i = 0
+for i < 1000000 {
+  i = i + 1
+}
+
+print(i == 1000000)
 
 ";
 
-var tokens = lexer.Lex(TEST_CODE);
+const string TEST_2 = @"
+  v = 1 == 1
+  
+  v = !v
+  
+  print(v)
+  print(""Expected false"")
+  
+  
+  v = -1
+  
+  print(v)
+  print(""Expected -1"")
+";
+
+var tokens = lexer.Lex(TEST_2);
 
 tokens.Reverse();
 
