@@ -80,33 +80,39 @@ public class BinExpr(Expression left, Expression right) : Expression {
   public Expression right = right;
   public TType op;
   public override Value Evaluate() {
+    var left = this.left.Evaluate();
+    var right = this.right.Evaluate();
+
     switch (op) {
-      case TType.Plus:{
-        var left = this.left.Evaluate() as Number;
-        left = left?.Add(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
-        return left!;
-      }
-      case TType.Minus: {
-        var left = this.left.Evaluate() as Number;
-        left = left?.Subtract(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
-        return left!;
-      }
-      case TType.Divide: {
-        var left = this.left.Evaluate() as Number;
-        left = left?.Divide(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
-        return left!;
-      }
-      case TType.Multiply: {
-        var left = this.left.Evaluate() as Number;
-        left = left?.Multiply(right.Evaluate() as Number ?? throw new InvalidOperationException("Invalid arithmetic"));
-        return left!;
-      }
-      case TType.Assign: {
-        var left = this.left.Evaluate();
-        left.Set(right.Evaluate());
+      case TType.Plus:
+        return left.Add(right);
+      case TType.Minus:
+        return left.Subtract(right);
+      case TType.Divide:
+        return left.Divide(right);
+      case TType.Multiply:
+        return left.Multiply(right);
+      case TType.LogicalOr:
+        return left.Or(right);
+      case TType.LogicalAnd:
+        return left.And(right);
+      case TType.Equal:
+        return new Bool(left.Equals(right));
+      case TType.NotEqual:
+        return new Bool(!left.Equals(right));
+      case TType.Greater:
+        return left.GreaterThan(right);
+      case TType.Less:
+        return left.LessThan(right);
+      case TType.GreaterEq:
+        return left.GreaterThanOrEqual(right);
+      case TType.LessEq:
+        return left.LessThanOrEqual(right);
+      case TType.Assign:
+        left.Set(right);
         return left;
-      }
-      default: return Number.Default;
+      default:
+        return Number.Default;
     }
   }
 }
@@ -170,5 +176,33 @@ public class Parameters(List<Identifier> names) : Statement {
     return null; // this doesnt need to do anything right now
     // maybe it will declare some variables when passed some values
     // but this probably has to be handled externally by teh fn call.
+  }
+}
+
+public class ExprError(string message) : Expression {
+  private readonly string message = message;
+  public override Value Evaluate() {
+    throw new Exception(message);
+  }
+}
+
+public class NativeCallableExpr(NativeCallable callable, List<Expression> args) : Expression {
+  public readonly NativeCallable callable = callable;
+  public readonly List<Expression> args = args;
+  public override Value Evaluate() {
+     return callable.Call(args);
+  }
+}
+
+public class NativeCallableStatement(NativeCallable callable, List<Expression> args) : Statement {
+  public readonly NativeCallable callable = callable;
+  public readonly List<Expression> args = args;
+
+  public static NativeCallableStatement FromExpr(NativeCallableExpr nExpr) {
+    return new(nExpr.callable, nExpr.args);
+  }
+
+  public override object? Evaluate() {
+    return callable.Call(args);
   }
 }

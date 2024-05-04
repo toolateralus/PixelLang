@@ -11,14 +11,13 @@ const string TEST_CODE = @"
 // print(object)
 // field = 10
 
-func inc(value) {
-  value = value + 1
-  print(value)
-}
+// func inc(value) {
+//   value = value + 1
+//   print(value)
+// }
+// inc(1)
 
-value = 0
-
-inc(value)
+value = ""I am a string"" + ""me too""
 
 print(value)
 ";

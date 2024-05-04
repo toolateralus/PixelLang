@@ -8,6 +8,7 @@ public enum ValueFlags {
   String = 1 << 1,
   Callable = 1 << 2,
   Object = 1 << 3,
+  Bool = 1 << 4,
 }
 
 public class Value(object? value, ValueFlags flags = ValueFlags.Number) {
@@ -26,7 +27,49 @@ public class Value(object? value, ValueFlags flags = ValueFlags.Number) {
   public void Set(object? value) {
     this.value = value;
   }
+  
+  
+  public virtual Value Divide(Value other) {
+    return Value.Default;
+  }
+  public virtual Value Multiply(Value other) {
+    return Value.Default;
+  }
+  public virtual Value Subtract(Value other) {
+    return Value.Default;
+  }
+  public virtual Value Add(Value other) {
+    return Value.Default;
+  }
+  public virtual Bool Or(Value other) {
+    return Bool.False;
+  }
+  public virtual Bool And(Value other) {
+    return Bool.False;
+  }
+  public virtual Bool GreaterThan(Value other) {
+    return Bool.False;
+  }
+  public virtual Bool LessThan(Value other) {
+    return Bool.False;
+  }
+  public virtual Bool GreaterThanOrEqual(Value other) {
+    return Bool.False;
+  }
+  public virtual Bool LessThanOrEqual(Value other) {
+    return Bool.False;
+  }
+  
+  public override bool Equals(object? obj) {
+    if (obj is Value value) {
+      return value.value == this.value;
+    }
+    return false;
+  }
 
+  public override int GetHashCode() {
+    return value?.GetHashCode() ?? 0;
+  }
 }
 
 public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
@@ -90,7 +133,18 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
   }
 }
 
-public class String(string value) : Value(value, ValueFlags.String);
+public class Bool(bool value) : Value(value, ValueFlags.Bool) {
+  public static readonly Bool False = new(false);
+  public static readonly Bool True = new(true);
+}
+public class String(string value) : Value(value, ValueFlags.String) {
+  public override Value Add(Value other) {
+    if (other is String str) {
+      return new String($"{base.value??""}{str.value as string}");
+    }
+    return Value.Default;
+  }
+}
 
 public class Number : Value {
   private Number(object? value) : base(value, ValueFlags.Number){}
@@ -116,7 +170,7 @@ public class Number : Value {
         return Default;
       return new(Convert.ToSingle(left) / Convert.ToSingle(right));
   }
-
+  
   public Number Multiply(Number other) {
       object? left = GetNumber();
       if (left == null) 
@@ -127,7 +181,7 @@ public class Number : Value {
         return Default;
       return new(Convert.ToSingle(left) * Convert.ToSingle(right));
   }
-
+  
   public Number Subtract(Number other) {
       object? left = GetNumber();
       if (left == null) 
@@ -138,7 +192,7 @@ public class Number : Value {
         return Default;
       return new(Convert.ToSingle(left) - Convert.ToSingle(right));
   }
-
+  
   public Number Add(Number other) {
       object? left = GetNumber();
       if (left == null) 
@@ -149,5 +203,6 @@ public class Number : Value {
         return Default;
       return new(Convert.ToSingle(left) + Convert.ToSingle(right));
   }
+  
   
 }

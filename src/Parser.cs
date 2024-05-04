@@ -177,10 +177,65 @@ public class Parser(IEnumerable<Token> tokens) {
       return new Declaration(iden, value);
     }
   }
-  private Expression ParseExpression() {
-    return ParseTerm();
-  }
-  private Expression ParseTerm() {
+    
+    private Expression ParseExpression() {
+    return ParseLogicalOr();
+    }
+    
+    private Expression ParseLogicalOr() {
+    Expression left = ParseLogicalAnd();
+
+    while (Peek().type == TType.LogicalOr) {
+      TType op = Eat().type;
+      Expression right = ParseLogicalAnd();
+
+      left = new BinExpr(left, right) { op = op };
+    }
+
+    return left;
+    }
+    
+    private Expression ParseLogicalAnd() {
+    Expression left = ParseEquality();
+
+    while (Peek().type == TType.LogicalAnd) {
+      TType op = Eat().type;
+      Expression right = ParseEquality();
+
+      left = new BinExpr(left, right) { op = op };
+    }
+
+    return left;
+    }
+    
+    private Expression ParseEquality() {
+    Expression left = ParseComparison();
+
+    while (Peek().type == TType.Equal || Peek().type == TType.NotEqual) {
+      TType op = Eat().type;
+      Expression right = ParseComparison();
+
+      left = new BinExpr(left, right) { op = op };
+    }
+
+    return left;
+    }
+    
+    private Expression ParseComparison() {
+    Expression left = ParseTerm();
+
+    while (Peek().type == TType.Greater || Peek().type == TType.Less ||
+         Peek().type == TType.GreaterEq || Peek().type == TType.LessEq) {
+      TType op = Eat().type;
+      Expression right = ParseTerm();
+
+      left = new BinExpr(left, right) { op = op };
+    }
+
+    return left;
+    }
+    
+    private Expression ParseTerm() {
     Expression left = ParseFactor();
 
     while (Peek().type == TType.Multiply || Peek().type == TType.Divide) {
@@ -191,8 +246,9 @@ public class Parser(IEnumerable<Token> tokens) {
     }
 
     return left;
-  }
-  private Expression ParseFactor() {
+    }
+    
+    private Expression ParseFactor() {
     Expression left = ParseOperand();
 
     while (Peek().type == TType.Plus || Peek().type == TType.Minus) {
@@ -203,7 +259,8 @@ public class Parser(IEnumerable<Token> tokens) {
     }
 
     return left;
-  }
+    }
+  
   private Expression ParseOperand() {
     var token = Peek();
 
@@ -213,7 +270,10 @@ public class Parser(IEnumerable<Token> tokens) {
           var block = ParseBlock();
           return new AnonObject(block, ASTNode.Context.PopScope());
         }
-      
+      case TType.String: {
+        Eat();
+        return new Operand(new String(token.value));
+      }
       case TType.Float:
         Eat();
         return new Operand(Number.FromFloat(token.value));
@@ -237,32 +297,4 @@ public class Parser(IEnumerable<Token> tokens) {
   }
 
   
-}
-
-internal class ExprError(string message) : Expression {
-  private readonly string message = message;
-  public override Value Evaluate() {
-    throw new Exception(message);
-  }
-}
-
-internal class NativeCallableExpr(NativeCallable callable, List<Expression> args) : Expression {
-  public readonly NativeCallable callable = callable;
-  public readonly List<Expression> args = args;
-  public override Value Evaluate() {
-     return callable.Call(args);
-  }
-}
-
-internal class NativeCallableStatement(NativeCallable callable, List<Expression> args) : Statement {
-  public readonly NativeCallable callable = callable;
-  public readonly List<Expression> args = args;
-
-  internal static NativeCallableStatement FromExpr(NativeCallableExpr nExpr) {
-    return new(nExpr.callable, nExpr.args);
-  }
-
-  public override object? Evaluate() {
-    return callable.Call(args);
-  }
 }

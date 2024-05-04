@@ -2,6 +2,7 @@
 
 
 using System.Runtime.Serialization;
+using System.Text;
 
 namespace PixelEngine.Lang;
 
@@ -36,6 +37,10 @@ public enum TType {
   Equal,
   NotEqual,
   Not,
+  LessEq,
+  GreaterEq,
+  Less,
+  Greater,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -65,6 +70,11 @@ public class Lexer {
     
     ["=="] = TType.Equal,
     ["!="] = TType.NotEqual,
+    
+    [">"] = TType.Greater,
+    ["<"] = TType.Less,
+    [">="] = TType.GreaterEq,
+    ["<="] = TType.LessEq,
     
     ["!"] = TType.Not,
     
@@ -108,6 +118,11 @@ public class Lexer {
         col++;
         continue;
       }
+      
+      if (cur == '\"') {
+        ParseString(input, ref pos, tokens);
+        continue;
+      }
 
       if (char.IsDigit(cur)) {
         LexNumber(input, ref pos, tokens, ref cur);
@@ -126,10 +141,24 @@ public class Lexer {
     
     return tokens;
   }
-  
-  private bool IsOperator(char c) {
-    return Operators.ContainsKey(c.ToString());
+
+  private void ParseString(string input, ref int pos, List<Token> tokens) {
+    char cur;
+    pos++;
+    StringBuilder value = new StringBuilder();
+    cur = input[pos];
+    while (pos < input.Length && cur != '\"') {
+      value.Append(cur);
+      pos++;
+      cur = input[pos];
+    }
+    pos++;
+    tokens.Add(new Token(loc, col, value.ToString(), TFamily.Literal, TType.String));
   }
+
+  private bool IsOperator(char c) {
+    return Operators.Keys.Any(op => op.StartsWith(c.ToString()));
+}
   
   private void LexOperator(string input, ref int pos, List<Token> tokens, ref char cur) {
     TFamily family = TFamily.Operator;
