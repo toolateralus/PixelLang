@@ -4,19 +4,24 @@ using PixelEngine.Lang;
 var lexer = new Lexer();
 
 const string TEST_CODE = @"
-object = {
-  field_1 = 10 * 2 * 300 * (20 + 1)
-  field_2 = 2 + 2
-}
-field = 10
+// object = {
+//   field_1 = 10 * 2 * 300 * (20 + 1)
+//   field_2 = 2 + 2
+// }
+// print(object)
+// field = 10
 
 
-func add(value) {
+func inc(value) {
   value = value + 1
+  print(value)
 }
 
-print(object)
-print(field + 2)
+value = 0
+
+inc(value)
+
+print(value)
 ";
 
 var tokens = lexer.Lex(TEST_CODE);

@@ -44,10 +44,14 @@ public class Parser(IEnumerable<Token> tokens) {
         } else goto default; // err
         case TFamily.Identifier:
           var operand = ParseOperand();
-          if (operand is not Identifier id) {
-            return new Error("Failed to start identifier statement");
+          if (operand is Identifier id) {
+            return ParseIdentifierStatement(id);
+          } else if (operand is CallableExpr expr) {
+            return new CallableStatment(expr.id, expr.args);
+          } else if (operand is NativeCallableExpr nExpr) {
+            return NativeCallableStatement.FromExpr(nExpr);
           }
-          return ParseIdentifierStatement(id);
+          return new Error($"Failed to start identifier statement {operand}");
         case TFamily.Keyword: {
             Eat(); // consume kw
             return ParseKeyword(token);
@@ -126,13 +130,20 @@ public class Parser(IEnumerable<Token> tokens) {
   private static Error UnexpectedEOI() {
     return new Error("Unexpceted end of input");
   }
-  private Statement ParseCall(Identifier iden) {
-    Expect(TType.LParen);
-    List<Expression> args = [];
-    while (Peek().type != TType.RParen) {
-      args.Add(ParseExpression());
+  
+  private Expression ParseCallExpr(Token token) {
+    List<Expression> args = ParseArguments();
+    Identifier iden = new(token.value);
+    if (NativeFunctions.TryCreateCallable(iden.name, out var callable)) {
+      return new NativeCallableExpr(callable, args);
     }
-    Expect(TType.RParen);
+    if (ASTNode.Context.TryGet(iden, out var call)) {
+      return new CallableExpr(iden, args);
+    }
+    return new ExprError($"Use of undeclared identifier {iden}");
+  }
+  private Statement ParseCall(Identifier iden) {
+    List<Expression> args = ParseArguments();
     
     if (NativeFunctions.TryCreateCallable(iden.name, out var callable)) {
       return new NativeCallableStatement(callable, args);
@@ -143,6 +154,17 @@ public class Parser(IEnumerable<Token> tokens) {
     }
     return new Error($"Use of undeclared identifier {iden}");
   }
+
+  private List<Expression> ParseArguments() {
+    Expect(TType.LParen);
+    List<Expression> args = [];
+    while (Peek().type != TType.RParen) {
+      args.Add(ParseExpression());
+    }
+    Expect(TType.RParen);
+    return args;
+  }
+
   private Statement ParseDeclOrAssign(Identifier iden) {
     Expect(TType.Assign);
     var value = ParseExpression();
@@ -191,7 +213,7 @@ public class Parser(IEnumerable<Token> tokens) {
           var block = ParseBlock();
           return new AnonObject(block, ASTNode.Context.PopScope());
         }
-
+      
       case TType.Float:
         Eat();
         return new Operand(Number.FromFloat(token.value));
@@ -200,6 +222,9 @@ public class Parser(IEnumerable<Token> tokens) {
         return new Operand(Number.FromInt(token.value));
       case TType.Identifier:
         Eat();
+        if (Peek().type == TType.LParen) {
+          return ParseCallExpr(token);
+        }
         return new Identifier(token.value);
       case TType.LParen:
         Eat();
@@ -210,10 +235,33 @@ public class Parser(IEnumerable<Token> tokens) {
         throw new Exception($"Unexpected token: {token.type}");
     }
   }
+
+  
 }
+
+internal class ExprError(string message) : Expression {
+  private readonly string message = message;
+  public override Value Evaluate() {
+    throw new Exception(message);
+  }
+}
+
+internal class NativeCallableExpr(NativeCallable callable, List<Expression> args) : Expression {
+  public readonly NativeCallable callable = callable;
+  public readonly List<Expression> args = args;
+  public override Value Evaluate() {
+     return callable.Call(args);
+  }
+}
+
 internal class NativeCallableStatement(NativeCallable callable, List<Expression> args) : Statement {
-  private readonly NativeCallable callable = callable;
-  private readonly List<Expression> args = args;
+  public readonly NativeCallable callable = callable;
+  public readonly List<Expression> args = args;
+
+  internal static NativeCallableStatement FromExpr(NativeCallableExpr nExpr) {
+    return new(nExpr.callable, nExpr.args);
+  }
+
   public override object? Evaluate() {
     return callable.Call(args);
   }
