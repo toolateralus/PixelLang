@@ -11,7 +11,6 @@ const string TEST_CODE = @"
 // print(object)
 // field = 10
 
-
 func inc(value) {
   value = value + 1
   print(value)

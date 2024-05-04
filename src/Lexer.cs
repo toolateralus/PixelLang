@@ -31,6 +31,11 @@ public enum TType {
   RCurly,
   Newline,
   Func,
+  LogicalOr,
+  LogicalAnd,
+  Equal,
+  NotEqual,
+  Not,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -54,9 +59,17 @@ public class Lexer {
     ["-"] = TType.Minus,
     ["*"] = TType.Multiply,
     ["/"] = TType.Divide,
+    
+    ["||"] = TType.LogicalOr,
+    ["&&"] = TType.LogicalAnd,
+    
+    ["=="] = TType.Equal,
+    ["!="] = TType.NotEqual,
+    
+    ["!"] = TType.Not,
+    
     ["("] = TType.LParen,
     [")"] = TType.RParen,
-    
     ["="] = TType.Assign,
     
     ["{"] = TType.LCurly,
@@ -119,21 +132,13 @@ public class Lexer {
   }
   
   private void LexOperator(string input, ref int pos, List<Token> tokens, ref char cur) {
-    string value = string.Empty;
     TFamily family = TFamily.Operator;
     
-    while (pos < input.Length) {
-      cur = input[pos];
-      if (IsOperator(cur)) {
-        value = cur.ToString();
-        if (Operators.TryGetValue(value, out TType type)) {
-          tokens.Add(new Token(loc, col, value, family, type));
-          pos++;
-        } else {
-          break;
-        }
-      } else {
-        break;
+    foreach (var op in Operators.Keys.OrderByDescending(o => o.Length)) {
+      if (input[pos..].StartsWith(op)) {
+        tokens.Add(new Token(loc, col, op, family, Operators[op]));
+        pos += op.Length;
+        return;
       }
     }
   }
