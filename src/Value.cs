@@ -257,20 +257,19 @@ public class Number : Value {
       return Default;
     return new(Convert.ToSingle(left) + Convert.ToSingle(right));
   }
-
   public override Bool GreaterThan(Value other) {
     if (other is Number n) {
-      if (n.value is float fval && this.value is float fval1) {
+      if (this.value is float fval && n.value is float fval1) {
         return new(fval > fval1);
       }
-      else if (n.value is int ival && this.value is int ival1) {
+      else if (this.value is int ival && n.value is int ival1) {
         return new(ival > ival1);
       }
-      else if (n.value is float fval2 && this.value is int ival2) {
-        return new(fval2 > ival2);
+      else if (this.value is int ival2 && n.value is float fval2) {
+        return new(ival2 > fval2);
       }
-      else if (n.value is int ival3 && this.value is float fval3) {
-        return new(ival3 > fval3);
+      else if (this.value is float fval3 && n.value is int ival3) {
+        return new(fval3 > ival3);
       }
       else {
         return Bool.False;
@@ -280,17 +279,17 @@ public class Number : Value {
   }
   public override Bool LessThan(Value other) {
      if (other is Number n) {
-      if (n.value is float fval && this.value is float fval1) {
+      if (this.value is float fval && n.value is float fval1) {
         return new(fval < fval1);
       }
-      else if (n.value is int ival && this.value is int ival1) {
+      else if (this.value is int ival && n.value is int ival1) {
         return new(ival < ival1);
       }
-      else if (n.value is float fval2 && this.value is int ival2) {
-        return new(fval2 < ival2);
+      else if (this.value is int ival2 && n.value is float fval2) {
+        return new(ival2 < fval2);
       }
-      else if (n.value is int ival3 && this.value is float fval3) {
-        return new(ival3 < fval3);
+      else if (this.value is float fval3 && n.value is int ival3) {
+        return new(fval3 < ival3);
       }
       else {
         return Bool.False;
@@ -300,17 +299,17 @@ public class Number : Value {
   }
   public override Bool GreaterThanOrEqual(Value other) {
      if (other is Number n) {
-      if (n.value is float fval && this.value is float fval1) {
+      if (this.value is float fval && n.value is float fval1) {
         return new(fval >= fval1);
       }
-      else if (n.value is int ival && this.value is int ival1) {
+      else if (this.value is int ival && n.value is int ival1) {
         return new(ival >= ival1);
       }
-      else if (n.value is float fval2 && this.value is int ival2) {
-        return new(fval2 >= ival2);
+      else if (this.value is int ival2 && n.value is float fval2) {
+        return new(ival2 >= fval2);
       }
-      else if (n.value is int ival3 && this.value is float fval3) {
-        return new(ival3 >= fval3);
+      else if (this.value is float fval3 && n.value is int ival3) {
+        return new(fval3 >= ival3);
       }
       else {
         return Bool.False;
@@ -320,17 +319,17 @@ public class Number : Value {
   }
   public override Bool LessThanOrEqual(Value other) {
      if (other is Number n) {
-      if (n.value is float fval && this.value is float fval1) {
+      if (this.value is float fval && n.value is float fval1) {
         return new(fval <= fval1);
       }
-      else if (n.value is int ival && this.value is int ival1) {
+      else if (this.value is int ival && n.value is int ival1) {
         return new(ival <= ival1);
       }
-      else if (n.value is float fval2 && this.value is int ival2) {
-        return new(fval2 <= ival2);
+      else if (this.value is int ival2 && n.value is float fval2) {
+        return new(ival2 <= fval2);
       }
-      else if (n.value is int ival3 && this.value is float fval3) {
-        return new(ival3 <= fval3);
+      else if (this.value is float fval3 && n.value is int ival3) {
+        return new(fval3 <= ival3);
       }
       else {
         return Bool.False;
