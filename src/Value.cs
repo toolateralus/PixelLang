@@ -52,22 +52,13 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
     result = Default;
     return false;
   }
-  public Value Call(List<Expression> args) {
-    var values = new List<Value>();
-    
-    for (int i = 0; i < args.Count; i++) {
-      Expression? arg = args[i];
-      var value = arg.Evaluate();
-      values.Add(value);
-    }
-    // These should be elsewhere, probably parse time.
-    // if (TryCallNativeFunction(func.name.name, values, out var result)) {
-    //   return result;
-    // }  
+  public virtual Value Call(List<Expression> args) {
+    List<Value> values = GetArgsValueList(args);
     ASTNode.Context.PushScope();
     for (int i = 0; i < values.Count; i++) {
       Value? value = values[i];
       var name = parameters.names[i];
+      
       // No shadowing.
       ASTNode.Context.Current.variables.TryAdd(name.name, value);
     }
@@ -77,6 +68,17 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
     }
     ASTNode.Context.PopScope();
     return Default;
+  }
+
+  public static List<Value> GetArgsValueList(List<Expression> args) {
+    var values = new List<Value>();
+    for (int i = 0; i < args.Count; i++) {
+      Expression? arg = args[i];
+      var value = arg.Evaluate();
+      values.Add(value);
+    }
+
+    return values;
   }
 }
 

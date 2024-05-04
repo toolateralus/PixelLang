@@ -134,6 +134,10 @@ public class Parser(IEnumerable<Token> tokens) {
     }
     Expect(TType.RParen);
     
+    if (NativeFunctions.TryCreateCallable(iden.name, out var callable)) {
+      return new NativeCallableStatement(callable, args);
+    }
+    
     if (ASTNode.Context.TryGet(iden, out _)) {
       return new CallableStatment(iden, args);
     }
@@ -206,4 +210,10 @@ public class Parser(IEnumerable<Token> tokens) {
     }
   }
 }
-
+internal class NativeCallableStatement(NativeCallable callable, List<Expression> args) : Statement {
+  private readonly NativeCallable callable = callable;
+  private readonly List<Expression> args = args;
+  public override object? Evaluate() {
+    return callable.Call(args);
+  }
+}
