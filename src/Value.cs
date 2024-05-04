@@ -35,23 +35,6 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
 public class Callable(Block block, Parameters parameters) : Value(null, ValueFlags.Callable) {
   public Block block = block;
   public Parameters parameters = parameters;
-  private readonly Dictionary<string, Func<List<Value>, Value>> NativeFunctions = new() {
-    ["print"] = (args) => {
-      foreach (var val in args) {
-        Console.WriteLine(val.value);
-      }
-      return Number.FromInt("0");
-    },
-  
-  };
-  private bool TryCallNativeFunction(string name, List<Value> func, out Value result) {
-    if (NativeFunctions.TryGetValue(name, out var fn)) {
-      result = fn(func);
-      return true;
-    }
-    result = Default;
-    return false;
-  }
   public virtual Value Call(List<Expression> args) {
     List<Value> values = GetArgsValueList(args);
     ASTNode.Context.PushScope();
