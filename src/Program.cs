@@ -74,7 +74,7 @@ array[0](""Hello!"")
 #pragma warning restore CS0219 // Variable is assigned but its value is never used
 
 
-var tokens = lexer.Lex(TEST_DOT);
+var tokens = lexer.Lex(TEST_CODE + TEST_UNARY + TEST_DOT);
 
 tokens.Reverse();
 
