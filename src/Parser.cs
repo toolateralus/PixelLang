@@ -109,6 +109,10 @@ public class Parser(IEnumerable<Token> tokens) {
       case TType.Return: {
           return ParseReturn();
         }
+      case TType.Import: {
+        Expect(TType.String);
+        return new NoopStatement();
+      }
       case TType.Break: {
           return ParseBreak();
         }
@@ -374,7 +378,7 @@ public class Parser(IEnumerable<Token> tokens) {
   private Expression ParsePostfix() {
     Expression left = ParseOperand();
 
-    while (true) {
+    while (tokens.Count > 0) {
         if (Peek().type == TType.SubscriptLeft) {
             Eat();
             Expression index = ParseExpression();
@@ -469,5 +473,12 @@ public class Parser(IEnumerable<Token> tokens) {
       Expect(TType.SubscriptRight);
       return new Operand(new Array(values));
     }
+  }
+}
+
+internal class NoopStatement : Statement {
+  public override object? Evaluate() {
+    // do nothing
+    return null;
   }
 }

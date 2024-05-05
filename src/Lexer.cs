@@ -51,6 +51,7 @@ public enum TType {
   Dot,
   SubscriptLeft,
   SubscriptRight,
+  Import,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -72,6 +73,7 @@ public class Lexer {
     ["for"] = TType.For,
     ["continue"] = TType.Continue,
     ["return"] = TType.Return,
+    ["import"] = TType.Import,
     ["break"] = TType.Break,
   };
   

@@ -85,6 +85,33 @@ if (args.Length > 0 && File.Exists(args[0])) {
 
 var lexer = new Lexer();
 var tokens = lexer.Lex(contents);
+var imported = new List<Token>();
+
+List<string> importedPaths = [];
+
+preProcess:
+tokens.InsertRange(0, imported);
+imported.Clear();
+string currentDirectory = System.IO.Directory.GetCurrentDirectory();
+
+for (int i = 0; i < tokens.Count; i++) {
+  Token? token = tokens[i];
+  if (i + 1 < tokens.Count && token.family == TFamily.Keyword && token.type == TType.Import && tokens[i + 1].type == TType.String) {
+    var iden = Path.Combine(currentDirectory, tokens[i + 1].value);
+    if (!importedPaths.Contains(iden) && File.Exists(iden)) {
+      var ctnts = File.ReadAllText(iden);
+      lexer = new Lexer();
+      imported = lexer.Lex(ctnts);
+      importedPaths.Add(iden);
+      goto preProcess;
+    } else if (! File.Exists(iden)) {
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine($"Unable to find import file {iden}");
+      Environment.Exit(1);
+    }
+  }
+}
+
 tokens.Reverse();
 var parser = new Parser(tokens);
 var program = parser.ParseProgram();
