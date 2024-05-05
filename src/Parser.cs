@@ -6,6 +6,9 @@ public class Parser(IEnumerable<Token> tokens) {
     return tokens.Pop();
   }
   public Token Peek() {
+    if (tokens.Count == 0) {
+      return Token.EOF;
+    }
     return tokens.Peek();
   }
   /// <summary>
@@ -144,11 +147,11 @@ public class Parser(IEnumerable<Token> tokens) {
     Statement? decl = null;
     Expression? condition = null;
     Statement? inc = null;
-
+    
     if (Peek().type == TType.LCurly) {
       return new For(null, null, null, ParseBlock());
     }
-
+    
     if (Peek().type == TType.Identifier) {
       var idTok = Peek();
       var iden = (ParseOperand() as Identifier)!;
@@ -161,18 +164,17 @@ public class Parser(IEnumerable<Token> tokens) {
         condition = ParseExpression();
       }
     }
-
+    
     if (Peek().type == TType.Comma) {
       Eat();
       condition = ParseExpression();
     }
-
+    
     if (Peek().type == TType.Comma) {
       Eat();
-      var iden = (ParseOperand() as Identifier)!;
-      inc = ParseDeclOrAssign(iden) as Assignment;
+      inc = ParseStatement();
     }
-
+    
     return new For(decl, condition, inc, ParseBlock());
   }
   private Else ParseElse() {
