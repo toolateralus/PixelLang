@@ -56,6 +56,7 @@ public enum TType {
   AssignMul,
   AssignMinus,
   AssignPlus,
+  Start,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -79,6 +80,7 @@ public class Lexer {
     ["return"] = TType.Return,
     ["import"] = TType.Import,
     ["break"] = TType.Break,
+    ["start"] = TType.Start,
   };
   
   public readonly Dictionary<string, TType> Operators = new() {

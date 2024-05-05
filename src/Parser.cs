@@ -113,6 +113,9 @@ public class Parser(IEnumerable<Token> tokens) {
       case TType.Return: {
           return ParseReturn();
         }
+      case TType.Start: {
+        return new Coroutine(ParseStatement());
+      } break;
       case TType.Import: {
           Expect(TType.String);
           return new NoopStatement();
@@ -480,5 +483,16 @@ public class Parser(IEnumerable<Token> tokens) {
       Expect(TType.SubscriptRight);
       return new Operand(new Array(values));
     }
+  }
+}
+
+internal class Coroutine(Statement statement) : Statement {
+  private Statement statement = statement;
+  
+  public override object? Evaluate() {
+    Task.Run(()=> {
+      statement.Evaluate();
+    });
+    return null;
   }
 }
