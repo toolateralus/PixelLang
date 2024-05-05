@@ -6,6 +6,9 @@ public class Parser(IEnumerable<Token> tokens) {
     return tokens.Pop();
   }
   public Token Peek() {
+    if (tokens.Count == 0) {
+      return Token.EOF;
+    }
     return tokens.Peek();
   }
   /// <summary>

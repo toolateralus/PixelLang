@@ -57,6 +57,7 @@ public enum TType {
   AssignMinus,
   AssignPlus,
   Start,
+  EOF,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -64,7 +65,7 @@ public class Token(int loc, int col, string val, TFamily fam, TType type) {
   public readonly string value = val;
   public readonly TFamily family = fam;
   public readonly TType type = type;
-
+  public static readonly Token EOF = new(0, 0, "", TFamily.Operator, TType.EOF);
   public override string ToString() {
     return $"Token({value})::{type}::{family}\nl:{loc} c:{col}";
   }
