@@ -1,7 +1,6 @@
 
 using PixelEngine.Lang;
 
-var lexer = new Lexer();
 
 
 #pragma warning disable CS0219 
@@ -71,22 +70,22 @@ const string TEST_DOT = @"
 array = [print]
 array[0](""Hello!"")
 ";
+
 #pragma warning restore CS0219 // Variable is assigned but its value is never used
 
 
-var tokens = lexer.Lex(TEST_CODE + TEST_UNARY + TEST_DOT);
+string contents = string.Empty;
+if (args.Length > 0 && File.Exists(args[0])) {
+  contents = File.ReadAllText(args[0]);
+} else {
+  Console.WriteLine("Invalid usage. provide a file to read");
+  return;
+}
 
+
+var lexer = new Lexer();
+var tokens = lexer.Lex(contents);
 tokens.Reverse();
-
 var parser = new Parser(tokens);
-
 var program = parser.ParseProgram();
-
 Statement.CatchError(program.Evaluate());
-
-// var interpreter = new Interpreter();
-
-// interpreter.VisitProgram(program);
-
-
-
