@@ -1,4 +1,12 @@
-input = readln()
+state = {
+  iter = 0
+}
 
+start for i=0, i<10, i += 1 {
+  state.iter = state.iter + 1
+  println(state.iter)
+}
 
-println(input)
+for i=0, i<10, i += 1 {
+  println(to_string("iter: ", state.iter, ", i: ", i))
+}

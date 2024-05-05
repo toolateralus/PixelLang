@@ -220,11 +220,6 @@ public class Block(List<Statement> statements) : Statement {
 }
 public class Identifier(string name) : Expression {
   public readonly string name = name;
-  public string Get() {
-    // this will probably get more compilcated as we have lvalues / dot operation
-    return name;
-  }
-  
   public override Value Evaluate() {
     if (Context.TryGet(this, out var val)) {
       return val;
@@ -238,9 +233,7 @@ public class Identifier(string name) : Expression {
 public class Parameters(List<Identifier> names) : Statement {
   public List<Identifier> names = names;
   public override object? Evaluate() {
-    return null; // this doesnt need to do anything right now
-    // maybe it will declare some variables when passed some values
-    // but this probably has to be handled externally by teh fn call.
+    return null;
   }
 }
 public class ExprError(string message) : Expression {

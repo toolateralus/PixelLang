@@ -77,7 +77,12 @@ public class Parser(IEnumerable<Token> tokens) {
   }
   private Statement ParseLValuePostFix(Expression expr) {
     if (expr is DotExpr dot) {
-      if (Peek().type == TType.Assign) {
+      var next = Peek().type;
+      // TODO: allow for compound assignment on LValue postfix
+      // obj.value += 01
+      // obj.array[]++ 
+      // etc
+      if (next == TType.Assign) {
         Eat();
         var value = ParseExpression();
         return new DotAssignStmnt(dot, value);
