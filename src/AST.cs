@@ -71,14 +71,6 @@ public class CallableStatment(Expression operand, List<Expression> args) : State
 public class CallableExpr(Expression operand, List<Expression> args) : Expression {
   public readonly List<Expression> args = args;
   public readonly Expression operand = operand;
-  public Value Evaluate(Object context) {
-    if (operand is Identifier id) {
-      return (context.GetMember(id) as Callable)?.Call(args) ?? Value.Default;
-    } else if (operand.Evaluate() is Callable callable) {
-      return callable.Call(args);
-    }
-    throw new Exception($"Failed to call callable {operand}");
-  }
   public override Value Evaluate() {
     if (operand is Identifier id && Context.TryGet(id, out var func)) {
       return (func as Callable)?.Call(args) ?? Value.Default;
@@ -112,42 +104,21 @@ public class Else : Statement {
 public class DotExpr(Expression left, Expression right) : Expression {
   public readonly Expression left = left;
   public readonly Expression right = right;
-
-  public Value Evaluate(Object context) {
-    if (right is Identifier identifier) {
-      return context.GetMember(identifier);
-    }
-
-    if (right is DotExpr dotExpr) {
-      var intermediate = context.GetMember((Identifier)dotExpr.left);
-      if (intermediate is not Object obj) {
-        throw new Exception("Intermediate object in dot expression must be an object");
-      }
-      return dotExpr.Evaluate(obj);
-    }
-
-    throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
-  }
   public override Value Evaluate() {
     var leftValue = left.Evaluate();
     if (leftValue is not Object obj) {
       throw new Exception("Left-hand side of dot operator must be an object");
     }
-
-    if (right is DotExpr dotExpr) {
-      return dotExpr.Evaluate(obj);
-    }
-
-    if (right is Identifier identifier) {
-      return obj.GetMember(identifier);
-    }
-
-    if (leftValue is Object o && right is CallableExpr call) {
-      return call.Evaluate(o);
-    }
-
-
-    throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
+    Context.PushScope(obj.scope);
+    var result = right switch {
+      DotExpr dotExpr => dotExpr.Evaluate(),
+      Identifier identifier => identifier.Evaluate(),
+      CallableExpr call => call.Evaluate(),
+      SubscriptExpr expr => expr.Evaluate(),
+      _ => throw new Exception($"Invalid Right hand side type: {right}")
+    };
+    Context.PopScope();
+    return result;
   }
   public void Assign(Value value) {
     var leftValue = left.Evaluate();
