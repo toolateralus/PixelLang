@@ -1,2 +1,5 @@
+func test(x, y) {
+  print(x, y)
+}
 
-print("hello")
+test(0, 1)

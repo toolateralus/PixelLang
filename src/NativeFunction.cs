@@ -23,7 +23,6 @@ public static class NativeFunctions {
       return Value.Default;
     },
   };
-  
   public static bool TryCreateCallable(string name, out NativeCallable callable) {
     callable = null!;
     if (functions.TryGetValue(name, out _)) {

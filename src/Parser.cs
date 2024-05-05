@@ -238,7 +238,13 @@ public class Parser(IEnumerable<Token> tokens) {
   private Statement ParseParameters() {
     Expect(TType.LParen);
     List<Identifier> paramNames = [];
-    while (tokens.Count > 0 && Peek().type != TType.RParen) {
+    while (tokens.Count > 0) {
+      var next = Peek();
+     if (next.type == TType.RParen) {
+        break;
+      } else if (paramNames.Count > 0) {
+        Expect(TType.Comma);
+      }
       var iden = ParseOperand();
       if (iden is not Identifier id) {
         return new Error("Cannot use a non-identifer as a parameter declaration");
@@ -268,12 +274,13 @@ public class Parser(IEnumerable<Token> tokens) {
   private List<Expression> ParseArguments() {
     Expect(TType.LParen);
     List<Expression> args = [];
-    while (true) {
+    while (tokens.Count > 0) {
       var next = Peek();
       if (next.type == TType.RParen) {
         break;
+      } else if (args.Count > 0) {
+        Expect(TType.Comma);
       }
-        
       args.Add(ParseExpression());
     }
     Expect(TType.RParen);
@@ -398,21 +405,7 @@ public class Parser(IEnumerable<Token> tokens) {
     return left;
 }
   
-  
-  
-  private Expression ParseDot() {
-    Expression left = ParseOperand();
-
-    while (Peek().type == TType.Dot) {
-      Eat();
-      Expression right = ParseOperand();
-
-      left = new DotExpr(left, right);
-    }
-
-    return left;
-  }
-
+ 
   #endregion
   private Expression ParseOperand() {
     var token = Peek();
