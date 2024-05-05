@@ -25,7 +25,25 @@ public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
     return false;
   }
   public Value Set(object? value) {
-    this.value = value;
+    if (value is Array a && this is Array v) {
+      v.values = a.values;
+      return this;
+    } else if (value is Object o && this is Object o1) {
+      o.scope = o1.scope;
+      o.block = o1.block;
+      return this;
+    }
+    this.value = value switch {
+      Number n => n.value,
+      String s => s.value,
+      Bool b => b.value,
+      float f => f,
+      int i => i,
+      string s => s,
+      bool b => b,
+      _ => value,
+    };
+    
     return this;
   }
   
