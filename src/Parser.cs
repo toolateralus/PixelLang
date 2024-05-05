@@ -115,7 +115,7 @@ public class Parser(IEnumerable<Token> tokens) {
         }
       case TType.Start: {
         return new Coroutine(ParseStatement());
-      } break;
+      }
       case TType.Import: {
           Expect(TType.String);
           return new NoopStatement();

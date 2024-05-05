@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace PixelEngine.Lang;
 
 public delegate Value NativeFunction(List<Value> args);
@@ -22,6 +24,14 @@ public static class NativeFunctions {
       }
       return Value.Default;
     },
+    ["to_string"] = (args) => {
+      StringBuilder builder = new();
+      foreach (var arg in args) {
+        builder.Append(arg.ToString());
+      }
+      return new String(builder.ToString());
+    },
+    
   };
   public static bool TryCreateCallable(string name, out NativeCallable callable) {
     callable = null!;
