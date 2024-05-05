@@ -62,10 +62,10 @@ public class CallableStatment(Expression operand, List<Expression> args) : State
   public override object? Evaluate() {
     if (operand is Identifier id && Context.TryGet(id, out var value)) {
       return (value as Callable)?.Call(args);
-    } else if (operand.Evaluate() is Callable callable) {
-      return callable.Call(args);
+    } else  {
+      var lvalue = operand.Evaluate();
+      return (lvalue as Callable)?.Call(args);
     }
-    return new Error($"Failed to call {operand}");
   }
 }
 public class CallableExpr(Expression operand, List<Expression> args) : Expression {
@@ -266,10 +266,13 @@ public class Identifier(string name) : Expression {
     // this will probably get more compilcated as we have lvalues / dot operation
     return name;
   }
-
+  
   public override Value Evaluate() {
     if (Context.TryGet(this, out var val)) {
       return val;
+    }
+    if (NativeFunctions.TryCreateCallable(this.name, out var callable)) {
+      return callable;
     }
     return Value.Default;
   }

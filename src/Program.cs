@@ -68,27 +68,8 @@ const string TEST_UNARY = @"
 ";
 
 const string TEST_DOT = @"
-array = []
-
-func x(msg) {
-  print(msg)
-  return msg
-}
-
-object = {
-  x = 10
-  
-  func method() {
-    print(""Hello 2"")
-  }
-}
-
-object.method()
-
-
-
-array = [x][0](""Hello!"")
-
+array = [print]
+array[0](""Hello!"")
 ";
 #pragma warning restore CS0219 // Variable is assigned but its value is never used
 
