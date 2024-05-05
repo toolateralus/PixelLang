@@ -66,6 +66,9 @@ public class CallableStatment(Identifier id, List<Expression> args) : Statement 
 public class CallableExpr(Identifier id, List<Expression> args) : Expression {
   public readonly List<Expression> args = args;
   public readonly Identifier id = id;
+  public Value Evaluate(Object context) {
+    return (context.GetMember(id) as Callable)?.Call(args) ?? Value.Default;
+  }
   public override Value Evaluate() {
     if (Context.TryGet(id, out var func)) {
       return (func as Callable)?.Call(args) ?? Value.Default;
@@ -94,14 +97,10 @@ public class Else : Statement {
   }
 }
 
-public class DotExpr : Expression {
-  public readonly Expression left;
-  public readonly Expression right;
+public class DotExpr(Expression left, Expression right) : Expression {
+  public readonly Expression left = left;
+  public readonly Expression right = right;
 
-  public DotExpr(Expression left, Expression right) {
-    this.left = left;
-    this.right = right;
-  }
   public Value Evaluate(Object context) {
     if (right is Identifier identifier) {
       return context.GetMember(identifier);
@@ -130,6 +129,11 @@ public class DotExpr : Expression {
     if (right is Identifier identifier) {
       return obj.GetMember(identifier);
     }
+    
+    if (leftValue is Object o && right is CallableExpr call) {
+      return call.Evaluate(o);
+    }
+    
     
     throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
   }
@@ -393,12 +397,18 @@ public class UnaryExpr(TType type, Expression operand) : Expression {
     return Value.Default;
   }
 }
-public class LValue(DotExpr dot, Expression value) : Statement {
+public class DotAssignStmnt(DotExpr dot, Expression value) : Statement {
   private readonly DotExpr dot = dot;
   private readonly Expression value = value;
-
   public override object? Evaluate() {
     dot.Assign(value.Evaluate());
     return null;
+  }
+}
+
+public class DotCallStmnt(DotExpr dot) : Statement {
+  private readonly DotExpr dot = dot;
+  public override object? Evaluate() {
+    return dot.Evaluate();
   }
 }

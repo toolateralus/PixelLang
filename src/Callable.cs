@@ -17,10 +17,15 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
     }
 
     foreach (Statement? statement in block.statements) {
-      Statement.CatchError(statement.Evaluate());
+      var result = statement.Evaluate();
+      Statement.CatchError(result);
+      
+      if (result is Value value) {
+        return value;
+      }
     }
     ASTNode.Context.PopScope();
-    return Callable.Default;
+    return Default;
   }
 
   public static List<Value> GetArgsValueList(List<Expression> args) {

@@ -50,7 +50,7 @@ public class Parser(IEnumerable<Token> tokens) {
             return ParseIdentifierStatement(id);
           }
           else if (operand is DotExpr dot) {
-            return ParseLValueStatement(dot);
+            return ParseDotLValue(dot);
           }
           else if (operand is CallableExpr expr) {
             return new CallableStatment(expr.id, expr.args);
@@ -68,13 +68,15 @@ public class Parser(IEnumerable<Token> tokens) {
     }
     return UnexpectedEOI();
   }
-
-  private Statement ParseLValueStatement(DotExpr dot) {
-    Expect(TType.Assign);
-    var value = ParseExpression();
-    return new LValue(dot, value);
+  private Statement ParseDotLValue(DotExpr dot) {
+    if (Peek().type == TType.Assign) {
+      Eat();
+      var value = ParseExpression();
+      return new DotAssignStmnt(dot, value);
+    } else if (dot.right is CallableExpr call) {
+      return new DotCallStmnt(dot);
+    } return new Error("Failed to parse dot LValue statement");
   }
-  
   private Statement ParseKeyword(Token token) {
     switch (token.type) {
       case TType.Func: {
@@ -160,7 +162,6 @@ public class Parser(IEnumerable<Token> tokens) {
     }
     
   }
-  
   private If ParseIf() {
     var condition = ParseExpression();
     var block = ParseBlock();
@@ -171,7 +172,6 @@ public class Parser(IEnumerable<Token> tokens) {
     }
     return ifStmnt;
   }
-
   private Statement ParseIdentifierStatement(Identifier identifier) {
     switch (Peek().type) {
       case TType.Assign: {
@@ -233,17 +233,13 @@ public class Parser(IEnumerable<Token> tokens) {
   private static Error UnexpectedEOI() {
     return new Error("Unexpceted end of input");
   }
-
   private Expression ParseCallExpr(Token token) {
     List<Expression> args = ParseArguments();
     Identifier iden = new(token.value);
     if (NativeFunctions.TryCreateCallable(iden.name, out var callable)) {
       return new NativeCallableExpr(callable, args);
     }
-    if (ASTNode.Context.TryGet(iden, out var call)) {
-      return new CallableExpr(iden, args);
-    }
-    return new ExprError($"Use of undeclared identifier {iden}");
+    return new CallableExpr(iden, args);
   }
   private Statement ParseCall(Identifier iden) {
     List<Expression> args = ParseArguments();
@@ -257,7 +253,6 @@ public class Parser(IEnumerable<Token> tokens) {
     }
     return new Error($"Use of undeclared identifier {iden}");
   }
-
   private List<Expression> ParseArguments() {
     Expect(TType.LParen);
     List<Expression> args = [];
@@ -267,7 +262,6 @@ public class Parser(IEnumerable<Token> tokens) {
     Expect(TType.RParen);
     return args;
   }
-  
   private Statement ParseDeclOrAssign(Identifier iden) {
     Expect(TType.Assign);
     var value = ParseExpression();
@@ -280,7 +274,7 @@ public class Parser(IEnumerable<Token> tokens) {
       return new Declaration(iden, value);
     }
   }
-  
+  #region Expressions
   private Expression ParseExpression() {
     return ParseLogicalOr();
   }
@@ -376,7 +370,7 @@ public class Parser(IEnumerable<Token> tokens) {
 
     return left;
   }
-  
+  #endregion
   private Expression ParseOperand() {
     var token = Peek();
     if (token.type == TType.Minus || token.type == TType.Not) {

@@ -70,21 +70,14 @@ const string TEST_UNARY = @"
 const string TEST_DOT = @"
 object = {
   field = 10
-  o = {
-    v = 1000
-    x = {
-      z = -1
+  func member() {
+    return {
+      value = 10
     }
   }
 }
 
-print(object.field)
-
-object.field = 100
-
-object.o.x.z = -2
-
-print(object.o.x.z)
+print(object.member())
 
 
 ";
