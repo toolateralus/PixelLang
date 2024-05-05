@@ -53,7 +53,7 @@ public class Parser(IEnumerable<Token> tokens) {
             return ParseDotLValue(dot);
           }
           else if (operand is CallableExpr expr) {
-            return new CallableStatment(expr.id, expr.args);
+            return new CallableStatment(expr.operand, expr.args);
           }
           else if (operand is NativeCallableExpr nExpr) {
             return NativeCallableStatement.FromExpr(nExpr);
@@ -237,30 +237,29 @@ public class Parser(IEnumerable<Token> tokens) {
   private static Error UnexpectedEOI() {
     return new Error("Unexpceted end of input");
   }
-  private Expression ParseCallExpr(Token token) {
+  private Expression ParseCallExpr(Expression operand) {
     List<Expression> args = ParseArguments();
-    Identifier iden = new(token.value);
-    if (NativeFunctions.TryCreateCallable(iden.name, out var callable)) {
+    if (operand is Identifier id && NativeFunctions.TryCreateCallable(id.name, out var callable)) {
       return new NativeCallableExpr(callable, args);
     }
-    return new CallableExpr(iden, args);
+    return new CallableExpr(operand, args);
   }
-  private Statement ParseCall(Identifier iden) {
+  private Statement ParseCall(Expression operand) {
     List<Expression> args = ParseArguments();
-
-    if (NativeFunctions.TryCreateCallable(iden.name, out var callable)) {
+    if (operand is Identifier id && NativeFunctions.TryCreateCallable(id.name, out var callable)) {
       return new NativeCallableStatement(callable, args);
     }
-
-    if (ASTNode.Context.TryGet(iden, out _)) {
-      return new CallableStatment(iden, args);
-    }
-    return new Error($"Use of undeclared identifier {iden}");
+    return new CallableStatment(operand, args);
   }
   private List<Expression> ParseArguments() {
     Expect(TType.LParen);
     List<Expression> args = [];
-    while (Peek().type != TType.RParen) {
+    while (true) {
+      var next = Peek();
+      if (next.type == TType.RParen) {
+        break;
+      }
+        
       args.Add(ParseExpression());
     }
     Expect(TType.RParen);
@@ -350,32 +349,43 @@ public class Parser(IEnumerable<Token> tokens) {
   }
 
   private Expression ParseFactor() {
-    Expression left = ParseSubscript();
+    Expression left = ParsePostfix();
     
     while (Peek().type == TType.Plus || Peek().type == TType.Minus) {
       TType op = Eat().type;
-      Expression right = ParseSubscript();
+      Expression right = ParsePostfix();
 
       left = new BinExpr(left, right) { op = op };
     }
-
+    
     return left;
   }
+  
+  private Expression ParsePostfix() {
+    Expression left = ParseOperand();
 
-  private Expression ParseSubscript() {
-    Expression left = ParseDot();
-
-    while (Peek().type == TType.SubscriptLeft) {
-      Eat();
-      Expression index = ParseExpression();
-      Expect(TType.SubscriptRight);
-      left = new SubscriptExpr(left, index);
+    while (true) {
+        if (Peek().type == TType.SubscriptLeft) {
+            Eat();
+            Expression index = ParseExpression();
+            Expect(TType.SubscriptRight);
+            left = new SubscriptExpr(left, index);
+        } else if (Peek().type == TType.Dot) {
+            Eat();
+            var iden = ParsePostfix();
+            left = new DotExpr(left, iden);
+        } else if (Peek().type == TType.LParen) {
+            left = ParseCallExpr(left);
+        } else {
+            break;
+        }
     }
 
     return left;
-  }
-
-
+}
+  
+  
+  
   private Expression ParseDot() {
     Expression left = ParseOperand();
 
@@ -420,9 +430,6 @@ public class Parser(IEnumerable<Token> tokens) {
         return new Operand(Number.FromInt(token.value));
       case TType.Identifier:
         Eat();
-        if (Peek().type == TType.LParen) {
-          return ParseCallExpr(token);
-        }
         return new Identifier(token.value);
       case TType.LParen:
         Eat();

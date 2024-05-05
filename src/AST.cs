@@ -56,27 +56,36 @@ public abstract class Statement : ASTNode {
     }
   }
 }
-public class CallableStatment(Identifier id, List<Expression> args) : Statement {
+public class CallableStatment(Expression operand, List<Expression> args) : Statement {
   public readonly List<Expression> args = args;
-  public readonly Identifier id = id;
+  public readonly Expression operand = operand;
   public override object? Evaluate() {
-    if (Context.TryGet(id, out var value)) {
+    if (operand is Identifier id && Context.TryGet(id, out var value)) {
       return (value as Callable)?.Call(args);
+    } else if (operand.Evaluate() is Callable callable) {
+      return callable.Call(args);
     }
-    return new Error($"Failed to call {id}");
+    return new Error($"Failed to call {operand}");
   }
 }
-public class CallableExpr(Identifier id, List<Expression> args) : Expression {
+public class CallableExpr(Expression operand, List<Expression> args) : Expression {
   public readonly List<Expression> args = args;
-  public readonly Identifier id = id;
+  public readonly Expression operand = operand;
   public Value Evaluate(Object context) {
-    return (context.GetMember(id) as Callable)?.Call(args) ?? Value.Default;
+    if (operand is Identifier id) {
+      return (context.GetMember(id) as Callable)?.Call(args) ?? Value.Default;
+    } else if (operand.Evaluate() is Callable callable) {
+      return callable.Call(args);
+    }
+    throw new Exception($"Failed to call callable {operand}");
   }
   public override Value Evaluate() {
-    if (Context.TryGet(id, out var func)) {
+    if (operand is Identifier id && Context.TryGet(id, out var func)) {
       return (func as Callable)?.Call(args) ?? Value.Default;
+    } else if (operand.Evaluate() is Callable callable) {
+      return callable.Call(args);
     }
-    throw new Exception($"Failed to call callable {id}");
+    throw new Exception($"Failed to call callable {operand}");
   }
 }
 public class Else : Statement {
