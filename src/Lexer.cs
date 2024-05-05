@@ -52,6 +52,10 @@ public enum TType {
   SubscriptLeft,
   SubscriptRight,
   Import,
+  AssignDiv,
+  AssignMul,
+  AssignMinus,
+  AssignPlus,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -98,6 +102,11 @@ public class Lexer {
     ["<"] = TType.Less,
     [">="] = TType.GreaterEq,
     ["<="] = TType.LessEq,
+    
+    ["+="] = TType.AssignPlus,
+    ["-="] = TType.AssignMinus,
+    ["*="] = TType.AssignMul,
+    ["/="] = TType.AssignDiv,
     
     ["("] = TType.LParen,
     [")"] = TType.RParen,

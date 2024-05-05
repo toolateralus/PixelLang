@@ -1,5 +1,5 @@
-func test(x, y) {
-  print(x, y)
-}
+x = 10
 
-test(0, 1)
+x += 20
+
+print(x)

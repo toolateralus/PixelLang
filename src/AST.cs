@@ -457,3 +457,47 @@ internal class SubscriptAssignStmnt(SubscriptExpr subscript, Expression value) :
     return Value.Default;
   }
 }
+
+internal class CompoundAssignStmnt : Statement {
+  private CompoundAssignExpr expr;
+  public CompoundAssignStmnt(CompoundAssignExpr expr) {
+    this.expr = expr;
+  }
+  public override object? Evaluate() {
+    expr.Evaluate();
+    return null;
+  }
+}
+
+internal class CompoundAssignExpr(Expression left, Expression right) : Expression {
+  private Expression left = left;
+  private Expression right = right;
+  public TType op { get; set; }
+  public override Value Evaluate() {
+    var left = this.left.Evaluate();
+    var right = this.right.Evaluate();
+    
+    switch (op) {
+      case TType.AssignDiv:
+        left.Set(left.Divide(right));
+        break;
+      case TType.AssignMul:
+        left.Set(left.Multiply(right));
+        break;
+      case TType.AssignPlus: 
+        left.Set(left.Add(right));
+        break;
+      case TType.AssignMinus:
+        left.Set(left.Subtract(right));
+        break;
+    }
+    return left;
+  }
+}
+
+public class NoopStatement : Statement {
+  public override object? Evaluate() {
+    // do nothing
+    return null;
+  }
+}

@@ -59,6 +59,8 @@ public class Parser(IEnumerable<Token> tokens) {
           }
           else if (operand is NativeCallableExpr nExpr) {
             return NativeCallableStatement.FromExpr(nExpr);
+          } else if (operand is CompoundAssignExpr cExpr) {
+            return new CompoundAssignStmnt(cExpr);
           }
           return new Error($"Failed to start identifier statement {operand}");
         case TFamily.Keyword: {
@@ -76,10 +78,12 @@ public class Parser(IEnumerable<Token> tokens) {
         Eat();
         var value = ParseExpression();
         return new DotAssignStmnt(dot, value);
-      } else if (dot.right is CallableExpr) {
+      }
+      else if (dot.right is CallableExpr) {
         return new DotCallStmnt(dot);
       }
-    } else if (expr is SubscriptExpr subscript) {
+    }
+    else if (expr is SubscriptExpr subscript) {
       if (Peek().type == TType.Assign) {
         Eat();
         var value = ParseExpression();
@@ -110,9 +114,9 @@ public class Parser(IEnumerable<Token> tokens) {
           return ParseReturn();
         }
       case TType.Import: {
-        Expect(TType.String);
-        return new NoopStatement();
-      }
+          Expect(TType.String);
+          return new NoopStatement();
+        }
       case TType.Break: {
           return ParseBreak();
         }
@@ -240,9 +244,10 @@ public class Parser(IEnumerable<Token> tokens) {
     List<Identifier> paramNames = [];
     while (tokens.Count > 0) {
       var next = Peek();
-     if (next.type == TType.RParen) {
+      if (next.type == TType.RParen) {
         break;
-      } else if (paramNames.Count > 0) {
+      }
+      else if (paramNames.Count > 0) {
         Expect(TType.Comma);
       }
       var iden = ParseOperand();
@@ -278,7 +283,8 @@ public class Parser(IEnumerable<Token> tokens) {
       var next = Peek();
       if (next.type == TType.RParen) {
         break;
-      } else if (args.Count > 0) {
+      }
+      else if (args.Count > 0) {
         Expect(TType.Comma);
       }
       args.Add(ParseExpression());
@@ -293,7 +299,6 @@ public class Parser(IEnumerable<Token> tokens) {
       return new Assignment(iden, value);
     }
     else {
-      var val = value.Evaluate();
       ASTNode.Context.TrySet(iden, value.Evaluate() ?? Value.Default);
       return new Declaration(iden, value);
     }
@@ -371,41 +376,50 @@ public class Parser(IEnumerable<Token> tokens) {
 
   private Expression ParseFactor() {
     Expression left = ParsePostfix();
-    
+
     while (Peek().type == TType.Plus || Peek().type == TType.Minus) {
       TType op = Eat().type;
       Expression right = ParsePostfix();
 
       left = new BinExpr(left, right) { op = op };
     }
-    
+
     return left;
   }
-  
+
   private Expression ParsePostfix() {
     Expression left = ParseOperand();
 
     while (tokens.Count > 0) {
-        if (Peek().type == TType.SubscriptLeft) {
-            Eat();
-            Expression index = ParseExpression();
-            Expect(TType.SubscriptRight);
-            left = new SubscriptExpr(left, index);
-        } else if (Peek().type == TType.Dot) {
-            Eat();
-            var iden = ParsePostfix();
-            left = new DotExpr(left, iden);
-        } else if (Peek().type == TType.LParen) {
-            left = ParseCallExpr(left);
-        } else {
-            break;
-        }
+      if (Peek().type == TType.SubscriptLeft) {
+        Eat();
+        Expression index = ParseExpression();
+        Expect(TType.SubscriptRight);
+        left = new SubscriptExpr(left, index);
+      }
+      else if (Peek().type == TType.Dot) {
+        Eat();
+        var iden = ParsePostfix();
+        left = new DotExpr(left, iden);
+      }
+      else if (Peek().type == TType.LParen) {
+        left = ParseCallExpr(left);
+      }
+      else if (Peek().type == TType.AssignPlus || Peek().type == TType.AssignMinus ||
+             Peek().type == TType.AssignMul || Peek().type == TType.AssignDiv) {
+        TType op = Eat().type;
+        Expression right = ParseExpression();
+        left = new CompoundAssignExpr(left, right) { op = op };
+      }
+      else {
+        break;
+      }
     }
 
     return left;
-}
-  
- 
+  }
+
+
   #endregion
   private Expression ParseOperand() {
     var token = Peek();
@@ -447,7 +461,7 @@ public class Parser(IEnumerable<Token> tokens) {
         throw new Exception($"Unexpected token: {token.type}");
     }
   }
-  
+
   private Operand ParseArrayInitializer() {
     Eat();
     if (Peek().type == TType.SubscriptRight) {
@@ -466,12 +480,5 @@ public class Parser(IEnumerable<Token> tokens) {
       Expect(TType.SubscriptRight);
       return new Operand(new Array(values));
     }
-  }
-}
-
-internal class NoopStatement : Statement {
-  public override object? Evaluate() {
-    // do nothing
-    return null;
   }
 }
