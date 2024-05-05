@@ -448,6 +448,15 @@ public class Parser(IEnumerable<Token> tokens) {
           Eat();
           return new Operand(new String(token.value));
         }
+      case TType.True:
+        Eat();
+        return new Operand(new Bool(true));
+      case TType.False:
+        Eat();
+        return new Operand(new Bool(false));
+      case TType.Null:
+        Eat();
+        return new Operand(Value.Default);
       case TType.Float:
         Eat();
         return new Operand(Number.FromFloat(token.value));

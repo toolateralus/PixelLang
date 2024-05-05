@@ -44,9 +44,9 @@ public class Array : Value {
     if (!values.Remove(other)) {
       return Default;
     }
-    return other;
+    return this;
   }
-
+  
   public void Push(Value value) {
     values.Add(value);
   }

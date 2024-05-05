@@ -58,6 +58,9 @@ public enum TType {
   AssignPlus,
   Start,
   EOF,
+  Null,
+  True,
+  False,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -82,6 +85,10 @@ public class Lexer {
     ["import"] = TType.Import,
     ["break"] = TType.Break,
     ["start"] = TType.Start,
+    
+    ["false"] = TType.False,
+    ["true"] = TType.True,
+    ["null"] = TType.Null
   };
   
   public readonly Dictionary<string, TType> Operators = new() {
@@ -227,6 +234,10 @@ public class Lexer {
     if (Keywords.TryGetValue(value, out var kwType)) {
       type = kwType;
       family = TFamily.Keyword;
+    }
+    
+    if (value == "false" || value == "true" || value == "null") {
+      family = TFamily.Literal;
     }
     
     tokens.Add(new(loc, col, value, family, type));
