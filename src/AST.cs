@@ -405,7 +405,6 @@ public class DotAssignStmnt(DotExpr dot, Expression value) : Statement {
     return null;
   }
 }
-
 public class DotCallStmnt(DotExpr dot) : Statement {
   private readonly DotExpr dot = dot;
   public override object? Evaluate() {

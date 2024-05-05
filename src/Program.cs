@@ -73,11 +73,14 @@ object = {
   func member() {
     return {
       value = 10
+      func member2() {
+        return ""i am gay""
+      }
+      
+      
     }
   }
 }
-
-print(object.member())
 
 
 ";
