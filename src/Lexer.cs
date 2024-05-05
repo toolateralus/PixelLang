@@ -49,6 +49,8 @@ public enum TType {
   Break,
   Comma,
   Dot,
+  SubscriptLeft,
+  SubscriptRight,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -83,6 +85,9 @@ public class Lexer {
     ["&&"] = TType.LogicalAnd,
     ["."] = TType.Dot,
     ["!"] = TType.Not,
+    
+    ["["] = TType.SubscriptLeft,
+    ["]"] = TType.SubscriptRight,
     
     ["=="] = TType.Equal,
     ["!="] = TType.NotEqual,

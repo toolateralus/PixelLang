@@ -39,6 +39,9 @@ public class Program : ASTNode {
 public class Operand(Value value) : Expression {
   public Value value = value;
   public override Value Evaluate() {
+    if (value is Array array) {
+      array.Init();
+    }
     return value;
   }
 }
@@ -105,7 +108,7 @@ public class DotExpr(Expression left, Expression right) : Expression {
     if (right is Identifier identifier) {
       return context.GetMember(identifier);
     }
-    
+
     if (right is DotExpr dotExpr) {
       var intermediate = context.GetMember((Identifier)dotExpr.left);
       if (intermediate is not Object obj) {
@@ -113,7 +116,7 @@ public class DotExpr(Expression left, Expression right) : Expression {
       }
       return dotExpr.Evaluate(obj);
     }
-    
+
     throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
   }
   public override Value Evaluate() {
@@ -121,20 +124,20 @@ public class DotExpr(Expression left, Expression right) : Expression {
     if (leftValue is not Object obj) {
       throw new Exception("Left-hand side of dot operator must be an object");
     }
-    
+
     if (right is DotExpr dotExpr) {
       return dotExpr.Evaluate(obj);
     }
-    
+
     if (right is Identifier identifier) {
       return obj.GetMember(identifier);
     }
-    
+
     if (leftValue is Object o && right is CallableExpr call) {
       return call.Evaluate(o);
     }
-    
-    
+
+
     throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
   }
   public void Assign(Object context, Value value) {
@@ -409,5 +412,21 @@ public class DotCallStmnt(DotExpr dot) : Statement {
   private readonly DotExpr dot = dot;
   public override object? Evaluate() {
     return dot.Evaluate();
+  }
+}
+
+public class SubscriptExpr(Expression left, Expression index) : Expression {
+  private readonly Expression left = left;
+  private readonly Expression index = index;
+  public override Value Evaluate() {
+    var lvalue = left.Evaluate();
+    if (lvalue is not Array array) {
+      throw new Exception("Cannot use subscript on anything but an array/map type.");
+    }
+    var idx = index.Evaluate();
+    if (idx is not Number number) {
+      throw new Exception("Subscript index must be a number.");
+    }
+    return array.At(number);
   }
 }

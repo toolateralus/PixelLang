@@ -1,7 +1,30 @@
+using System.Text;
+
 namespace PixelEngine.Lang;
 
 public class Array : Value {
   public List<Value> values = [];
+  private bool initialized;
+  private readonly List<Expression>? initializer;
+  public Array(List<Expression> init) {
+    initializer = init;
+  }
+  public Array() {
+    
+  }
+
+  public override string ToString() {
+    StringBuilder sb = new();
+    sb.Append('[');
+    foreach (var val in values) {
+      sb.Append(val);
+      if (values.Last() != val) {
+        sb.Append(", ");
+      }
+    }
+    sb.Append(']');
+    return sb.ToString();
+  }
   public override bool Equals(object? obj) {
     if (obj is Array other) {
       return other.values == this.values;
@@ -42,5 +65,13 @@ public class Array : Value {
     }
     return Default;
   }
-  
+
+  internal void Init() {
+    if (initializer != null && !initialized) {
+      foreach (var expr in initializer) {
+        Push(expr.Evaluate());
+      }
+      initialized = true;
+    }
+  }
 }

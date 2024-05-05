@@ -45,7 +45,7 @@ public class Parser(IEnumerable<Token> tokens) {
           else goto default; // err
         case TFamily.Identifier:
           var operand = ParseDot();
-          
+
           if (operand is Identifier id) {
             return ParseIdentifierStatement(id);
           }
@@ -73,9 +73,11 @@ public class Parser(IEnumerable<Token> tokens) {
       Eat();
       var value = ParseExpression();
       return new DotAssignStmnt(dot, value);
-    } else if (dot.right is CallableExpr call) {
+    }
+    else if (dot.right is CallableExpr call) {
       return new DotCallStmnt(dot);
-    } return new Error("Failed to parse dot LValue statement");
+    }
+    return new Error("Failed to parse dot LValue statement");
   }
   private Statement ParseKeyword(Token token) {
     switch (token.type) {
@@ -116,39 +118,40 @@ public class Parser(IEnumerable<Token> tokens) {
   }
   private Statement ParseFor() {
     if (Peek().type == TType.LParen) {
-        Eat();
+      Eat();
     }
     Statement? decl = null;
     Expression? condition = null;
     Statement? inc = null;
 
     if (Peek().type == TType.LCurly) {
-        return new For(null, null, null, ParseBlock());
+      return new For(null, null, null, ParseBlock());
     }
 
     if (Peek().type == TType.Identifier) {
-        var idTok = Peek();
-        var iden = (ParseOperand() as Identifier)!;
-        
-        if (Peek().type == TType.Assign) {
-            decl = ParseDeclOrAssign(iden);
-        } else {
-            tokens.Push(idTok);
-            condition = ParseExpression();
-        }
-    }
+      var idTok = Peek();
+      var iden = (ParseOperand() as Identifier)!;
 
-    if (Peek().type == TType.Comma) {
-        Eat();
+      if (Peek().type == TType.Assign) {
+        decl = ParseDeclOrAssign(iden);
+      }
+      else {
+        tokens.Push(idTok);
         condition = ParseExpression();
+      }
     }
 
     if (Peek().type == TType.Comma) {
-        Eat();
-        var iden = (ParseOperand() as Identifier)!;
-        inc = ParseDeclOrAssign(iden) as Assignment;
+      Eat();
+      condition = ParseExpression();
     }
-    
+
+    if (Peek().type == TType.Comma) {
+      Eat();
+      var iden = (ParseOperand() as Identifier)!;
+      inc = ParseDeclOrAssign(iden) as Assignment;
+    }
+
     return new For(decl, condition, inc, ParseBlock());
   }
   private Else ParseElse() {
@@ -157,10 +160,11 @@ public class Parser(IEnumerable<Token> tokens) {
       Eat();
       var @if = ParseIf();
       return new Else(@if);
-    } else {
+    }
+    else {
       return new Else(ParseBlock());
     }
-    
+
   }
   private If ParseIf() {
     var condition = ParseExpression();
@@ -278,10 +282,10 @@ public class Parser(IEnumerable<Token> tokens) {
   private Expression ParseExpression() {
     return ParseLogicalOr();
   }
-  
+
   private Expression ParseLogicalOr() {
     Expression left = ParseLogicalAnd();
-    
+
     while (Peek().type == TType.LogicalOr) {
       TType op = Eat().type;
       Expression right = ParseLogicalAnd();
@@ -291,7 +295,7 @@ public class Parser(IEnumerable<Token> tokens) {
 
     return left;
   }
-  
+
   private Expression ParseLogicalAnd() {
     Expression left = ParseEquality();
 
@@ -341,23 +345,37 @@ public class Parser(IEnumerable<Token> tokens) {
 
       left = new BinExpr(left, right) { op = op };
     }
-    
+
     return left;
   }
 
   private Expression ParseFactor() {
-    Expression left = ParseDot();
+    Expression left = ParseSubscript();
     
     while (Peek().type == TType.Plus || Peek().type == TType.Minus) {
       TType op = Eat().type;
-      Expression right = ParseDot();
+      Expression right = ParseSubscript();
 
       left = new BinExpr(left, right) { op = op };
     }
 
     return left;
   }
-  
+
+  private Expression ParseSubscript() {
+    Expression left = ParseDot();
+
+    while (Peek().type == TType.SubscriptLeft) {
+      Eat();
+      Expression index = ParseExpression();
+      Expect(TType.SubscriptRight);
+      left = new SubscriptExpr(left, index);
+    }
+
+    return left;
+  }
+
+
   private Expression ParseDot() {
     Expression left = ParseOperand();
 
@@ -370,6 +388,7 @@ public class Parser(IEnumerable<Token> tokens) {
 
     return left;
   }
+
   #endregion
   private Expression ParseOperand() {
     var token = Peek();
@@ -378,8 +397,11 @@ public class Parser(IEnumerable<Token> tokens) {
       var operand = ParseOperand();
       return new UnaryExpr(token.type, operand);
     }
-    
+
     switch (token.type) {
+      case TType.SubscriptLeft: {
+          return ParseArrayInitializer();
+        }
       case TType.LCurly: {
           var scope = ASTNode.Context.PushScope();
           var block = ParseBlock();
@@ -411,6 +433,25 @@ public class Parser(IEnumerable<Token> tokens) {
         throw new Exception($"Unexpected token: {token.type}");
     }
   }
-
-
+  
+  private Operand ParseArrayInitializer() {
+    Eat();
+    if (Peek().type == TType.SubscriptRight) {
+      Eat();
+      return new Operand(new Array());
+    }
+    else {
+      List<Expression> values = [];
+      while (Peek().type != TType.SubscriptRight) {
+        var val = ParseExpression();
+        values.Add(val);
+        if (Peek().type == TType.Comma) {
+          Eat();
+        }
+      }
+      Expect(TType.SubscriptRight);
+      return new Operand(new Array(values));
+    }
+  }
 }
+

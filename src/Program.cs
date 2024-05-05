@@ -68,12 +68,12 @@ const string TEST_UNARY = @"
 ";
 
 const string TEST_DOT = @"
-object = {
+array = []
 
-}
+array1 = [1,2,3]
 
-print(object)
-
+print(array)
+print(array1)
 
 ";
 #pragma warning restore CS0219 // Variable is assigned but its value is never used
