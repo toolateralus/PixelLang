@@ -69,18 +69,10 @@ const string TEST_UNARY = @"
 
 const string TEST_DOT = @"
 object = {
-  field = 10
-  func member() {
-    return {
-      value = 10
-      func member2() {
-        return ""i am gay""
-      }
-      
-      
-    }
-  }
+
 }
+
+print(object)
 
 
 ";
