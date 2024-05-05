@@ -10,7 +10,8 @@
       "request": "launch",
       "preLaunchTask": "Build-Lang",
       "program": "${workspaceFolder}/bin/Debug/net8.0/PixelLang.dll",
-      "args": ["test.wire"]
+      "args": ["test.wire"],
+      "console": "externalTerminal"
     }
   ]
 }

@@ -81,7 +81,6 @@ public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
   public virtual Bool LessThanOrEqual(Value other) {
     return Bool.Default;
   }
-
   public virtual Value Negate() {
     return Number.Default;
   }

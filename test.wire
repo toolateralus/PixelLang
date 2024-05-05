@@ -1,8 +1,4 @@
-i = 0
-i += 1
+input = readln()
 
-print(i)
 
-i += 10
-
-print(i)
+println(input)

@@ -20,9 +20,32 @@ public static class NativeFunctions {
   public static readonly Dictionary<string, NativeFunction> functions = new() {
     ["print"] = (args) => {
       foreach (var arg in args) {
+        Console.Write(arg);
+      }
+      return Value.Default;
+    },
+    ["println"] = (args) => {
+      foreach (var arg in args) {
         Console.WriteLine(arg);
       }
       return Value.Default;
+    },
+    ["readkey"] = (args) => {
+      var value = Console.ReadKey();
+      return new String(value.KeyChar.ToString());
+    },
+    ["readkeycode"] = (args) => {
+      var value = Console.ReadKey();
+      return Number.FromInt((int)value.Key);
+    },
+    ["readln"] = (args) => {
+      if (args.Count > 0) {
+        foreach (var arg in args) {
+          Console.WriteLine(arg);
+        }
+      }
+      var value = Console.ReadLine() ?? "";
+      return new String(value);
     },
     ["to_string"] = (args) => {
       StringBuilder builder = new();

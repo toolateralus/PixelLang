@@ -77,7 +77,7 @@ public class CallableExpr(Expression operand, List<Expression> args) : Expressio
     } else if (operand.Evaluate() is Callable callable) {
       return callable.Call(args);
     }
-    throw new Exception($"Failed to call callable {operand}");
+    throw new Exception($"Failed to call callable {operand}. This is likely an undefined function or the type is not callable");
   }
 }
 public class Else : Statement {

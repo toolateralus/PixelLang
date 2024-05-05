@@ -2,13 +2,19 @@ namespace PixelEngine.Lang;
 
 public class Number : Value {
   private Number(object? value) : base(value, ValueFlags.Number) { }
-  public static Number FromInt(string value) {
+  public static Number ParseInt(string value) {
     return new Number(int.Parse(value));
   }
-  public static Number FromFloat(string value) {
+  public static Number ParseFloat(string value) {
     return new Number(float.Parse(value));
   }
-  public static new readonly Number Default = FromInt("0");
+  public static Number From(float value) {
+    return new Number(value);
+  }
+  public static Number FromInt(int value) {
+    return new Number(value);
+  }
+  public static new readonly Number Default = ParseInt("0");
   public object? GetNumber() {
     if (Get<int>(out var left)) {
       return left;  

@@ -459,10 +459,10 @@ public class Parser(IEnumerable<Token> tokens) {
         return new Operand(Value.Default);
       case TType.Float:
         Eat();
-        return new Operand(Number.FromFloat(token.value));
+        return new Operand(Number.ParseFloat(token.value));
       case TType.Int:
         Eat();
-        return new Operand(Number.FromInt(token.value));
+        return new Operand(Number.ParseInt(token.value));
       case TType.Identifier:
         Eat();
         return new Identifier(token.value);
