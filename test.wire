@@ -1,5 +1,11 @@
-for i = 0, i < 10, i = i + 1 {
-  print("")
+if {} == null {
+  print("was null")
+} else{
+  print("was not null")
 }
 
-v = [print][0]("")
+if (1 == 0) == false {
+  print("was false")
+} else if (1 == 0) == false {
+  print("was true")
+}
