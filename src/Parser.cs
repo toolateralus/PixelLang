@@ -70,6 +70,16 @@ public class Parser(IEnumerable<Token> tokens) {
           return new Error($"Failed to start identifier statement {operand}");
         case TFamily.Keyword: {
             Eat(); // consume kw
+            // for func(..) {...}() anonymous func declaration & invocation statements.
+            if (token.type == TType.Func && Peek().type == TType.LParen) {
+              var parameters = ParseParameters();
+              Statement.CatchError(parameters);
+              var body = ParseBlock();
+              var @params = (parameters as Parameters)!;
+              var arguments = ParseArguments();
+              var op = new Operand(new Callable(body, @params));
+              return new CallableStatment(op, arguments);
+            }
             return ParseKeyword(token);
           }
         default: return new Error($"Failed to parse statement.. {token}");
@@ -518,10 +528,12 @@ public class Parser(IEnumerable<Token> tokens) {
 
 internal class Coroutine(Statement statement) : Statement {
   private Statement statement = statement;
-  
+  public static int active = 0;
   public override object? Evaluate() {
+    active++;
     Task.Run(()=> {
       statement.Evaluate();
+      active--;
     });
     return null;
   }

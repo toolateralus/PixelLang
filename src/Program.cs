@@ -116,3 +116,7 @@ tokens.Reverse();
 var parser = new Parser(tokens);
 var program = parser.ParseProgram();
 Statement.CatchError(program.Evaluate());
+
+while (ASTNode.Context.TryGet(new("WAIT_FOR_COROUTINES_TO_EXIT"), out _) && Coroutine.active > 0) {
+  
+}

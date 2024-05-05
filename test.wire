@@ -1,5 +1,7 @@
-calls = 0
-f = func() {
-  calls += 1
-  print(to_string(calls) + " hello ")
+WAIT_FOR_COROUTINES_TO_EXIT = true
+
+
+start func() {
+  println("hello")
 }()
+
