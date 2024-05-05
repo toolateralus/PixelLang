@@ -60,24 +60,16 @@ public class CallableStatment(Expression operand, List<Expression> args) : State
   public readonly List<Expression> args = args;
   public readonly Expression operand = operand;
   public override object? Evaluate() {
-    if (operand is Identifier id && Context.TryGet(id, out var value)) {
-      return (value as Callable)?.Call(args);
-    } else  {
-      var lvalue = operand.Evaluate();
-      return (lvalue as Callable)?.Call(args);
-    }
+     var op = operand.Evaluate() as Callable ?? throw new Exception($"Failed to call callable {operand}. This is likely an undefined function or the type is not callable");
+    return op.Call(args);
   }
 }
 public class CallableExpr(Expression operand, List<Expression> args) : Expression {
   public readonly List<Expression> args = args;
   public readonly Expression operand = operand;
   public override Value Evaluate() {
-    if (operand is Identifier id && Context.TryGet(id, out var func)) {
-      return (func as Callable)?.Call(args) ?? Value.Default;
-    } else if (operand.Evaluate() is Callable callable) {
-      return callable.Call(args);
-    }
-    throw new Exception($"Failed to call callable {operand}. This is likely an undefined function or the type is not callable");
+    var op = operand.Evaluate() as Callable ?? throw new Exception($"Failed to call callable {operand}. This is likely an undefined function or the type is not callable");
+    return op.Call(args);
   }
 }
 public class Else : Statement {

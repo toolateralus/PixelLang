@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace PixelEngine.Lang;
 public class Parser(IEnumerable<Token> tokens) {
   public Stack<Token> tokens = new(tokens);
@@ -309,7 +311,11 @@ public class Parser(IEnumerable<Token> tokens) {
       return new Assignment(iden, value);
     }
     else {
-      ASTNode.Context.TrySet(iden, value.Evaluate() ?? Value.Default);
+      if (value is CallableExpr callable) {
+        ASTNode.Context.TrySet(iden, (callable.operand.Evaluate()) ?? Callable.Default);        
+      } else {
+        ASTNode.Context.TrySet(iden, value.Evaluate() ?? Value.Default);
+      }
       return new Declaration(iden, value);
     }
   }
@@ -443,6 +449,14 @@ public class Parser(IEnumerable<Token> tokens) {
       case TType.SubscriptLeft: {
           return ParseArrayInitializer();
         }
+      case TType.Func: {
+        Eat();
+        var parameters = ParseParameters();
+        Statement.CatchError(parameters);
+        var body = ParseBlock();
+        var @params = (parameters as Parameters)!;
+        return new Operand(new Callable(body, @params));
+      }
       case TType.LCurly: {
           var scope = ASTNode.Context.PushScope();
           var block = ParseBlock();

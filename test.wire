@@ -1,12 +1,5 @@
-state = {
-  iter = 0
-}
-
-start for i=0, i<10, i += 1 {
-  state.iter = state.iter + 1
-  println(state.iter)
-}
-
-for i=0, i<10, i += 1 {
-  println(to_string("iter: ", state.iter, ", i: ", i))
-}
+calls = 0
+f = func() {
+  calls += 1
+  print(to_string(calls) + " hello ")
+}()
