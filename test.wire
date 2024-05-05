@@ -1,11 +1,18 @@
-if {} == null {
-  print("was null")
-} else{
-  print("was not null")
+o1 = {
+  x = 1
+  y = 2
+}
+o2 = {
+  x = 2
+  y = 3
+}
+myobj = {
+  obj1 = o1
+  obj2 = o2
+  arr = [] + 1 + 2 + 3
+  func dothing() {
+	obj1.x = obj1.x + 1
+  }
 }
 
-if (1 == 0) == false {
-  print("was false")
-} else if (1 == 0) == false {
-  print("was true")
-}
+v = [print][0]("")
