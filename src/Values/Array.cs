@@ -74,4 +74,14 @@ public class Array : Value {
       initialized = true;
     }
   }
+
+  internal void Assign(Number index, Value value) {
+    var idx = index.GetNumber();
+    if (idx is float fidx && (int)fidx < values.Count) {
+      values[(int)fidx] = value;
+    }
+    if (idx is int iidx && iidx < values.Count) {
+      values[iidx] = value;
+    }
+  }
 }

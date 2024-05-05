@@ -425,8 +425,8 @@ public class DotCallStmnt(DotExpr dot) : Statement {
 }
 
 public class SubscriptExpr(Expression left, Expression index) : Expression {
-  private readonly Expression left = left;
-  private readonly Expression index = index;
+  public readonly Expression left = left;
+  public readonly Expression index = index;
   public override Value Evaluate() {
     var lvalue = left.Evaluate();
     if (lvalue is not Array array) {
@@ -437,5 +437,20 @@ public class SubscriptExpr(Expression left, Expression index) : Expression {
       throw new Exception("Subscript index must be a number.");
     }
     return array.At(number);
+  }
+}
+
+
+internal class SubscriptAssignStmnt(SubscriptExpr subscript, Expression value) : Statement {
+  private readonly SubscriptExpr subscript = subscript;
+  private readonly Expression value = value;
+  public override object? Evaluate() {
+    var lvalue = subscript.left.Evaluate();
+    var idx = subscript.index.Evaluate();
+    if (lvalue is not Array array || idx is not Number number) {
+      throw new Exception("Cannot subscript on non-array types or non-numeric indices");
+    }
+    array.Assign(number, value.Evaluate());
+    return Value.Default;
   }
 }

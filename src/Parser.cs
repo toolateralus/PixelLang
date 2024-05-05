@@ -44,13 +44,15 @@ public class Parser(IEnumerable<Token> tokens) {
           }
           else goto default; // err
         case TFamily.Identifier:
-          var operand = ParseDot();
-
+          var operand = ParsePostfix();
           if (operand is Identifier id) {
             return ParseIdentifierStatement(id);
           }
+          else if (operand is SubscriptExpr) {
+            return ParseLValuePostFix(operand);
+          }
           else if (operand is DotExpr dot) {
-            return ParseDotLValue(dot);
+            return ParseLValuePostFix(dot);
           }
           else if (operand is CallableExpr expr) {
             return new CallableStatment(expr.operand, expr.args);
@@ -68,16 +70,24 @@ public class Parser(IEnumerable<Token> tokens) {
     }
     return UnexpectedEOI();
   }
-  private Statement ParseDotLValue(DotExpr dot) {
-    if (Peek().type == TType.Assign) {
-      Eat();
-      var value = ParseExpression();
-      return new DotAssignStmnt(dot, value);
+  private Statement ParseLValuePostFix(Expression expr) {
+    if (expr is DotExpr dot) {
+      if (Peek().type == TType.Assign) {
+        Eat();
+        var value = ParseExpression();
+        return new DotAssignStmnt(dot, value);
+      } else if (dot.right is CallableExpr) {
+        return new DotCallStmnt(dot);
+      }
+    } else if (expr is SubscriptExpr subscript) {
+      if (Peek().type == TType.Assign) {
+        Eat();
+        var value = ParseExpression();
+        return new SubscriptAssignStmnt(subscript, value);
+      }
     }
-    else if (dot.right is CallableExpr call) {
-      return new DotCallStmnt(dot);
-    }
-    return new Error("Failed to parse dot LValue statement");
+
+    return new Error("Failed to parse LValue postfix statement");
   }
   private Statement ParseKeyword(Token token) {
     switch (token.type) {
@@ -461,4 +471,3 @@ public class Parser(IEnumerable<Token> tokens) {
     }
   }
 }
-
