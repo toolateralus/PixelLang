@@ -135,6 +135,11 @@ public class Lexer {
         continue;
       }
       
+      if (cur == '\t') {
+        pos++;
+        continue;
+      }
+      
       // Newlines
       if (cur == '\n') {
         col = 0;
