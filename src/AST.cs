@@ -149,21 +149,6 @@ public class DotExpr(Expression left, Expression right) : Expression {
 
     throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
   }
-  public void Assign(Object context, Value value) {
-    if (right is Identifier identifier) {
-      context.SetMember(identifier, value);
-    }
-    else if (right is DotExpr dotExpr) {
-      var intermediate = context.GetMember((Identifier)dotExpr.left);
-      if (intermediate is not Object obj) {
-        throw new Exception("Intermediate object in dot expression must be an object");
-      }
-      dotExpr.Assign(obj, value);
-    }
-    else {
-      throw new Exception("Right-hand side of dot operator must be an identifier or dot expression");
-    }
-  }
   public void Assign(Value value) {
     var leftValue = left.Evaluate();
     if (leftValue is not Object obj) {
@@ -171,7 +156,9 @@ public class DotExpr(Expression left, Expression right) : Expression {
     }
 
     if (right is DotExpr dotExpr) {
-      dotExpr.Assign(obj, value);
+      Context.PushScope(obj.scope);
+      dotExpr.Assign(value);
+      Context.PopScope();
     }
 
     if (right is Identifier identifier) {
