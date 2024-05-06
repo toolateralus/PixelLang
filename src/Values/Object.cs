@@ -8,7 +8,6 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
   public Block block = block;
   public Scope scope = scope;
 
-  public static new readonly Object Default = new(null!, null!);
   
   public override string ToString() {
     StringBuilder builder = new();
@@ -40,13 +39,13 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
     if (scope.variables.TryGetValue(right.name, out var v)) {
       return v;
     }
-    return Default;
+    return Undefined;
   }
    public Value GetMember(string name) {
     if (scope.variables.TryGetValue(name, out var v)) {
       return v;
     }
-    return Default;
+    return Undefined;
   }
   public void SetMember(string name, Value value) {
     if (!scope.variables.TryAdd(name, value)) {
