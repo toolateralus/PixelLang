@@ -25,7 +25,7 @@ public class Callable(Block block, Parameters parameters) : Value(null, ValueFla
       }
     }
     ASTNode.Context.PopScope();
-    return Default;
+    return Undefined;
   }
 
   public static List<Value> GetArgsValueList(List<Expression> args) {

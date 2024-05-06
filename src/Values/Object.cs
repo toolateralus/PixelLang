@@ -13,7 +13,7 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
   public override string ToString() {
     StringBuilder builder = new();
     if (scope == null) {
-      builder.Append("NULL");
+      builder.Append("null");
       return builder.ToString();
     }
     builder.AppendLine("{");

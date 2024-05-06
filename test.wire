@@ -1,7 +1,4 @@
-WAIT_FOR_COROUTINES_TO_EXIT = true
 
-
-start func() {
-  println("hello")
-}()
-
+if x != undefined {
+  println(x)
+}

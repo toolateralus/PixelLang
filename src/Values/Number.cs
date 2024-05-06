@@ -15,6 +15,7 @@ public class Number : Value {
     return new Number(value);
   }
   public static new readonly Number Default = ParseInt("0");
+  
   public object? GetNumber() {
     if (Get<int>(out var left)) {
       return left;  

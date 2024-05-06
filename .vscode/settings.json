@@ -1,0 +1,5 @@
+{
+  "[wire]": {
+    "editor.defaultFormatter": "ms-vscode.js-debug"
+}
+}

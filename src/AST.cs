@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace PixelEngine.Lang;
 public class AnonObject(Block block, Scope scope) : Expression {
@@ -60,16 +61,14 @@ public class CallableStatment(Expression operand, List<Expression> args) : State
   public readonly List<Expression> args = args;
   public readonly Expression operand = operand;
   public override object? Evaluate() {
-     var op = operand.Evaluate() as Callable ?? throw new Exception($"Failed to call callable {operand}. This is likely an undefined function or the type is not callable");
-    return op.Call(args);
+    return (operand.Evaluate() as Callable)?.Call(args) ?? Value.Undefined;
   }
 }
 public class CallableExpr(Expression operand, List<Expression> args) : Expression {
   public readonly List<Expression> args = args;
   public readonly Expression operand = operand;
   public override Value Evaluate() {
-    var op = operand.Evaluate() as Callable ?? throw new Exception($"Failed to call callable {operand}. This is likely an undefined function or the type is not callable");
-    return op.Call(args);
+    return (operand.Evaluate() as Callable)?.Call(args) ?? Value.Undefined;
   }
 }
 public class Else : Statement {
@@ -195,16 +194,19 @@ public class FuncDecl(Identifier name, Parameters parameters, Block body) : Stat
     return new Error($"Failed to dereference {name}");
   }
 }
+
 public class Block(List<Statement> statements) : Statement {
   public readonly List<Statement> statements = statements;
-
   public override object? Evaluate() {
+    Context.PushScope();
     foreach (var statement in statements) {
       if (statement is Continue || statement is Break || statement is Return) {
+        Context.PopScope();
         return statement;
       }
       CatchError(statement.Evaluate());
     }
+    Context.PopScope();
     return null;
   }
 
@@ -219,7 +221,7 @@ public class Identifier(string name) : Expression {
     if (NativeFunctions.TryCreateCallable(this.name, out var callable)) {
       return callable;
     }
-    return Value.Default;
+    return Value.Undefined;
   }
 }
 public class Parameters(List<Identifier> names) : Statement {
@@ -257,24 +259,28 @@ public class Return(Expression value) : Statement {
     return value.Evaluate();
   }
 }
-public class For(Statement? decl, Expression? condition, Statement? increment, Block block) : Statement {
+public class For(Statement? decl, Expression? condition, Statement? increment, Block block, Scope scope) : Statement {
   private readonly Statement? decl = decl;
   private readonly Expression? condition = condition;
   private readonly Statement? increment = increment;
   private readonly Block block = block;
+  private readonly Scope scope = scope;
   public override object? Evaluate() {
+    scope.variables.Clear();
+    Context.PushScope(scope);
     CatchError(decl?.Evaluate());
     if (condition != null) {
       while (true) {
         var conditionResult = condition?.Evaluate();
         if (conditionResult is not Bool b || b.Equals(Bool.False)) {
+          Context.PopScope();
           return null;
         }
-
-
+        
+        
         var blockResult = block.Evaluate();
         _ = increment?.Evaluate();
-
+        
         CatchError(blockResult);
         if (blockResult is Break) {
           break;
@@ -283,7 +289,9 @@ public class For(Statement? decl, Expression? condition, Statement? increment, B
           continue;
         }
         if (blockResult is Return ret) {
-          return ret.Evaluate();
+          var value = ret.Evaluate();
+          Context.PopScope();
+          return value;
         }
       }
     }
@@ -299,11 +307,14 @@ public class For(Statement? decl, Expression? condition, Statement? increment, B
           continue;
         }
         if (blockResult is Return ret) {
-          return ret.Evaluate();
+          var value = ret.Evaluate();
+          Context.PopScope();
+          return value;
         }
-
+      
       }
     }
+    Context.PopScope();
     return null;
   }
 }
@@ -352,7 +363,7 @@ public class UnaryExpr(TType type, Expression operand) : Expression {
     else if (op == TType.Not) {
       return operand.Evaluate().Not();
     }
-    return Value.Default;
+    return Value.Undefined;
   }
 }
 public class DotAssignStmnt(DotExpr dot, Expression value) : Statement {
@@ -397,7 +408,7 @@ internal class SubscriptAssignStmnt(SubscriptExpr subscript, Expression value) :
       throw new Exception("Cannot subscript on non-array types or non-numeric indices");
     }
     array.Assign(number, value.Evaluate());
-    return Value.Default;
+    return Value.Undefined;
   }
 }
 

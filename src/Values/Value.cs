@@ -7,6 +7,20 @@ public enum ValueFlags {
   Callable = 1 << 2,
   Object = 1 << 3,
   Bool = 1 << 4,
+  Undefined = 1 << 5,
+}
+
+public class Undefined() : Value(new(), ValueFlags.Undefined) {
+  public override bool Equals(object? obj) {
+    return obj == Undefined;
+  }
+  
+  public override int GetHashCode() {
+    return -1;
+  }
+  public override string ToString() {
+    return "undefined";
+  }
 }
 public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
   public override string ToString() {
@@ -14,8 +28,8 @@ public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
   }
   public readonly ValueFlags flags = flags;
   internal protected object? value = value;
-  
-  public static readonly Value Default = new(null);
+  public static readonly Undefined Undefined = new();
+  public static readonly Value Null = new(null);
   public bool Get<T>(out T val) {
     if (value is T t) {
       val = t;
@@ -49,19 +63,19 @@ public class Value(object? value = null, ValueFlags flags = ValueFlags.Number) {
   
   
   public virtual Value Divide(Value other) {
-    return Default;
+    return Undefined;
   }
   public virtual Value Multiply(Value other) {
-    return Default;
+    return Undefined;
   }
   public virtual Value Subtract(Value other) {
-    return Default;
+    return Undefined;
   }
   public virtual Value Not() {
-    return Default;
+    return Undefined;
   }
   public virtual Value Add(Value other) {
-    return Default;
+    return Undefined;
   }
   public virtual Bool Or(Value other) {
     return Bool.Default;

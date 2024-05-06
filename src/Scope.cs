@@ -23,7 +23,7 @@ public class Context {
         return true;
       }
     }
-    val = Value.Default;
+    val = Value.Undefined;
     return false;
   }  
   /// <summary>

@@ -12,7 +12,7 @@ public class NativeCallable(string name) : Callable(null!, null!) {
       return fn(GetArgsValueList(args));
     }
     // Don't return a default callable.
-    return Value.Default;
+    return Value.Undefined;
   }
 
 }
@@ -23,13 +23,13 @@ public static class NativeFunctions {
       foreach (var arg in args) {
         Console.Write(arg);
       }
-      return Value.Default;
+      return Value.Null;
     },
     ["println"] = (args) => {
       foreach (var arg in args) {
         Console.WriteLine(arg);
       }
-      return Value.Default;
+      return Value.Null;
     },
     ["readkey"] = (args) => {
       var value = Console.ReadKey();

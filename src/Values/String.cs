@@ -5,7 +5,7 @@ public class String(string value) : Value(value, ValueFlags.String) {
     if (other is String str) {
       return new String($"{base.value ?? ""}{str.value as string}");
     }
-    return Value.Default;
+    return Value.Undefined;
   }
   
   public override bool Equals(object? obj) {

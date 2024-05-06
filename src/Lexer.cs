@@ -30,7 +30,6 @@ public enum TType {
   RParen,
   LCurly,
   RCurly,
-  Newline,
   Func,
   LogicalOr,
   LogicalAnd,
@@ -61,6 +60,8 @@ public enum TType {
   Null,
   True,
   False,
+  Module,
+  Undefined,
 }
 
 public class Token(int loc, int col, string val, TFamily fam, TType type) {
@@ -85,9 +86,10 @@ public class Lexer {
     ["import"] = TType.Import,
     ["break"] = TType.Break,
     ["start"] = TType.Start,
-    
+    ["module"] = TType.Module,
     ["false"] = TType.False,
     ["true"] = TType.True,
+    ["undefined"] = TType.Undefined,
     ["null"] = TType.Null
   };
   
@@ -136,7 +138,7 @@ public class Lexer {
       if (pos < input.Length - 1 && cur == '/' && input[pos + 1] == '/') {
         col = 0;
         loc++;
-        while (pos < input.Length && cur != '\n') {
+        while (pos < input.Length - 1 && cur != '\n') {
           pos++;
           cur = input[pos];
         }
@@ -153,7 +155,6 @@ public class Lexer {
         col = 0;
         loc++;
         pos++;
-        tokens.Add(new(loc, col, "\n", TFamily.Operator, TType.Newline));
         continue;
       }
       
@@ -236,7 +237,7 @@ public class Lexer {
       family = TFamily.Keyword;
     }
     
-    if (value == "false" || value == "true" || value == "null") {
+    if (value == "false" || value == "true" || value == "null" || value == "undefined") {
       family = TFamily.Literal;
     }
     

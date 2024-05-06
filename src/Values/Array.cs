@@ -42,7 +42,7 @@ public class Array : Value {
   
   public override Value Subtract(Value other) {
     if (!values.Remove(other)) {
-      return Default;
+      return Undefined;
     }
     return this;
   }
@@ -63,7 +63,7 @@ public class Array : Value {
     if (idx is int iidx && iidx < values.Count) {
       return values[iidx];
     }
-    return Default;
+    return Undefined;
   }
 
   internal void Init() {

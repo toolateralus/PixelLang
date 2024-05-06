@@ -28,10 +28,6 @@ public class Parser(IEnumerable<Token> tokens) {
   public Program ParseProgram() {
     Program program = new();
     while (tokens.Count > 0) {
-      if (Peek().type == TType.Newline) {
-        Eat();
-        continue;
-      }
       var statement = ParseStatement();
       Statement.CatchError(statement);
       program.statements.Add(statement);
@@ -42,12 +38,6 @@ public class Parser(IEnumerable<Token> tokens) {
     while (tokens.Count > 0) {
       var token = Peek();
       switch (token.family) {
-        case TFamily.Operator:
-          if (token.type == TType.Newline) {
-            Eat();
-            continue;
-          }
-          else goto default; // err
         case TFamily.Identifier:
           var operand = ParsePostfix();
           if (operand is Identifier id) {
@@ -162,6 +152,8 @@ public class Parser(IEnumerable<Token> tokens) {
     return new Continue();
   }
   private Statement ParseFor() {
+    
+    var scope = ASTNode.Context.PushScope();
     if (Peek().type == TType.LParen) {
       Eat();
     }
@@ -170,7 +162,7 @@ public class Parser(IEnumerable<Token> tokens) {
     Statement? inc = null;
     
     if (Peek().type == TType.LCurly) {
-      return new For(null, null, null, ParseBlock());
+      return new For(null, null, null, ParseBlock(), ASTNode.Context.PopScope());
     }
     
     if (Peek().type == TType.Identifier) {
@@ -196,7 +188,7 @@ public class Parser(IEnumerable<Token> tokens) {
       inc = ParseStatement();
     }
     
-    return new For(decl, condition, inc, ParseBlock());
+    return new For(decl, condition, inc, ParseBlock(), ASTNode.Context.PopScope());
   }
   private Else ParseElse() {
     Eat(); // consume else.
@@ -249,20 +241,16 @@ public class Parser(IEnumerable<Token> tokens) {
     Expect(TType.LCurly);
     List<Statement> statements = [];
     var next = Peek();
+    
+    ASTNode.Context.PushScope();
     while (next.type != TType.RCurly) {
-
-      if (next.type == TType.Newline) {
-        Eat();
-        next = Peek();
-        continue;
-      }
-
       var statement = ParseStatement();
       Statement.CatchError(statement);
       statements.Add(statement);
       next = Peek();
     }
     Expect(TType.RCurly);
+    ASTNode.Context.PopScope();
     return new Block(statements);
   }
   private Statement ParseParameters() {
@@ -325,17 +313,19 @@ public class Parser(IEnumerable<Token> tokens) {
       return new Assignment(iden, value);
     }
     else {
-      if (value is CallableExpr callable) {
-        ASTNode.Context.TrySet(iden, (callable.operand.Evaluate()) ?? Callable.Default);        
-      } else {
-        ASTNode.Context.TrySet(iden, value.Evaluate() ?? Value.Default);
-      }
+      
       return new Declaration(iden, value);
     }
   }
   #region Expressions
   private Expression ParseExpression() {
-    return ParseLogicalOr();
+    var left = ParseLogicalOr();
+    if (Peek().type == TType.Assign) {
+      Eat();
+      var right = ParseLogicalOr();
+      return new BinExpr(left, right) {op = TType.Assign};
+    }
+    return left;
   }
 
   private Expression ParseLogicalOr() {
@@ -472,8 +462,20 @@ public class Parser(IEnumerable<Token> tokens) {
         return new Operand(new Callable(body, @params));
       }
       case TType.LCurly: {
+          Eat();
           var scope = ASTNode.Context.PushScope();
-          var block = ParseBlock();
+          List<Statement> statements = [];
+          while (tokens.Count > 0) {
+            var next = Peek();
+            if (next.type == TType.RCurly) {
+              break;
+            }
+            var statement = ParseStatement();
+            Statement.CatchError(statement);
+            statements.Add(statement);
+          }
+          Expect(TType.RCurly);          
+          Block block = new(statements);
           ASTNode.Context.PopScope();
           return new AnonObject(block, scope);
         }
@@ -487,9 +489,12 @@ public class Parser(IEnumerable<Token> tokens) {
       case TType.False:
         Eat();
         return new Operand(new Bool(false));
+      case TType.Undefined:
+        Eat();
+        return new Operand(Value.Undefined);
       case TType.Null:
         Eat();
-        return new Operand(Value.Default);
+        return new Operand(Value.Null);
       case TType.Float:
         Eat();
         return new Operand(Number.ParseFloat(token.value));

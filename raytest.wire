@@ -1,0 +1,83 @@
+module raylib
+
+KEY_W = 87
+KEY_A = 65
+KEY_S = 83
+KEY_D = 68
+
+println(new_node())
+
+
+func new_node() {
+  return {
+    x = 0
+    y = 0
+    w = 10
+    h = 10
+    color = {
+      r=70
+      g=70
+      b=255
+      a=255
+    }
+    func draw() {
+      draw_rect(x, y, w, h, color)
+      println("drawing at : ", to_string(x, " ", y))
+    }
+    func move(vel) {
+      x += vel.x
+      y += vel.y
+    }
+  }
+}
+
+
+
+func take_input() {
+  speed = 0.01
+  vel = {
+    x=0 
+    y=0 
+  }
+  
+  if is_key_down(KEY_W) {
+    vel.y = vel.y + speed
+  } 
+  if is_key_down(KEY_S) {
+    vel.y = vel.y - speed
+  }
+  if is_key_down(KEY_A) {
+    vel.x = vel.x - speed
+  }
+  if is_key_down(KEY_D) {
+    vel.x = vel.x + speed
+  }
+  return vel
+}
+
+nodes = [new_node(), new_node()]
+
+init_window(800, 600, "Test window")
+
+for   {
+  if window_should_close() {
+    break
+  }
+  
+  vel = take_input()
+  
+  begin_draw()
+  
+  clear_color({r=0 g=0 b=0 a=0})
+  
+  for i =0, i < 2, i += 1 {
+    node = nodes[i]
+    println(node)
+    if node != null {
+      node.draw()
+      node.move(vel)
+    }
+  }
+  
+  end_draw()
+}
