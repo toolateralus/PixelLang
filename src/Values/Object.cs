@@ -36,14 +36,24 @@ public class Object(Block block, Scope scope) : Value(null, ValueFlags.Object) {
     return scope.variables.GetHashCode();
   }
 
-  internal Value GetMember(Identifier right) {
+  public Value GetMember(Identifier right) {
     if (scope.variables.TryGetValue(right.name, out var v)) {
       return v;
     }
     return Default;
   }
-
-  internal void SetMember(Identifier right, Value value) {
+   public Value GetMember(string name) {
+    if (scope.variables.TryGetValue(name, out var v)) {
+      return v;
+    }
+    return Default;
+  }
+  public void SetMember(string name, Value value) {
+    if (!scope.variables.TryAdd(name, value)) {
+      scope.variables[name] = value;
+    }
+  }
+  public void SetMember(Identifier right, Value value) {
     if (!scope.variables.TryAdd(right.name, value)) {
       scope.variables[right.name] = value;
     }

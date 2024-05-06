@@ -136,6 +136,10 @@ public class Parser(IEnumerable<Token> tokens) {
       case TType.Start: {
         return new Coroutine(ParseStatement());
       }
+      case TType.Module: {
+        Expect(TType.Identifier);
+        return new NoopStatement();
+      }
       case TType.Import: {
           Expect(TType.String);
           return new NoopStatement();

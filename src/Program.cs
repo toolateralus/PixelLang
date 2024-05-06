@@ -109,6 +109,15 @@ for (int i = 0; i < tokens.Count; i++) {
       Console.WriteLine($"Unable to find import file {iden}");
       Environment.Exit(1);
     }
+  } else if (i + 1 < tokens.Count && token.family == TFamily.Keyword && token.type == TType.Module && tokens[i + 1].type == TType.Identifier) {
+    const string moduleRoot = "/usr/local/pixel/";
+    var modulePath = moduleRoot + tokens[i + 1].value + ".dll";
+    if (!Path.Exists(modulePath) || Path.GetExtension(modulePath) != ".dll") {
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine($"Unable to find import module {modulePath}");
+      Environment.Exit(1);
+    }
+    NativeFunctions.LoadModule(modulePath);
   }
 }
 
@@ -117,6 +126,8 @@ var parser = new Parser(tokens);
 var program = parser.ParseProgram();
 Statement.CatchError(program.Evaluate());
 
+// TODO: validate that we want to do it like this.
+// Kinda janky
 while (ASTNode.Context.TryGet(new("WAIT_FOR_COROUTINES_TO_EXIT"), out _) && Coroutine.active > 0) {
   
 }
